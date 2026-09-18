@@ -126,7 +126,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
               )}
             </button>
           </form>
-          </div>
         </div>
 
         {/* Back link */}
