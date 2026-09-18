@@ -39,11 +39,12 @@ const STORAGE_KEYS = {
   PAYABLES: 'citrino_payables_v1',
   COUPONS: 'citrino_coupons_v1',
   BANNERS: 'citrino_banners_v1',
-  ADMIN_USERS: 'citrino_admin_users_v1',
+  ADMIN_USERS: 'citrino_admin_users_v2',  // bumped to v2 to force re-seed with passwords
   CART: 'citrino_cart_v1',
   WISHLIST: 'citrino_wishlist_v1',
   CURRENT_USER: 'citrino_current_user_v1',
   ACTIVE_ROLE: 'citrino_active_role_v1',
+  ADMIN_SESSION: 'citrino_admin_session_v1',
 };
 
 function getLocal<T>(key: string, fallback: T): T {
@@ -172,6 +173,7 @@ export function useCitrinoStore() {
   // Auth state
   const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(() => getLocal(STORAGE_KEYS.CURRENT_USER, INITIAL_CUSTOMERS[0]));
   const [activeAdminRole, setActiveAdminRole] = useState<AdminRole>(() => getLocal(STORAGE_KEYS.ACTIVE_ROLE, 'admin'));
+  const [adminSession, setAdminSession] = useState<AdminUser | null>(() => getLocal(STORAGE_KEYS.ADMIN_SESSION, null));
 
   // Save to localStorage when state changes
   useEffect(() => { setLocal(STORAGE_KEYS.PRODUCTS, products); }, [products]);
@@ -188,6 +190,7 @@ export function useCitrinoStore() {
   useEffect(() => { setLocal(STORAGE_KEYS.CURRENT_USER, currentCustomer); }, [currentCustomer]);
   useEffect(() => { setLocal(STORAGE_KEYS.ACTIVE_ROLE, activeAdminRole); }, [activeAdminRole]);
   useEffect(() => { setLocal('citrino_settings_v1', companySettings); }, [companySettings]);
+  useEffect(() => { setLocal(STORAGE_KEYS.ADMIN_SESSION, adminSession); }, [adminSession]);
 
   // Cart actions
   const addToCart = (
@@ -622,13 +625,42 @@ export function useCitrinoStore() {
     }
   };
 
-  const currentAdminUser = {
-    id: adminUsers[0]?.id || 'u1',
-    name: adminUsers[0]?.name || 'Juliana Camargo',
-    email: adminUsers[0]?.email || 'admin@citrinosemijoias.com.br',
-    role: adminUsers[0]?.role || 'Administrador Geral',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+  // Admin auth functions
+  const loginAdmin = (email: string, password: string): boolean => {
+    const user = adminUsers.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password && u.active
+    );
+    if (user) {
+      const sessionUser = { ...user };
+      sessionUser.lastLogin = new Date().toISOString().replace('T', ' ').substring(0, 16);
+      setAdminSession(sessionUser);
+      setAdminUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, lastLogin: sessionUser.lastLogin } : u))
+      );
+      return true;
+    }
+    return false;
   };
+
+  const logoutAdmin = () => {
+    setAdminSession(null);
+  };
+
+  const currentAdminUser = adminSession
+    ? {
+        id: adminSession.id,
+        name: adminSession.name,
+        email: adminSession.email,
+        role: adminSession.role as string,
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      }
+    : {
+        id: adminUsers[0]?.id || 'u1',
+        name: adminUsers[0]?.name || 'Admin',
+        email: adminUsers[0]?.email || 'admin@citrinosemijoias.com.br',
+        role: adminUsers[0]?.role || 'admin',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      };
 
   // Reset demo data helper
   const resetToInitialData = () => {
@@ -704,5 +736,8 @@ export function useCitrinoStore() {
     setActiveAdminRole,
     setCompanySettings,
     resetToInitialData,
+    adminSession,
+    loginAdmin,
+    logoutAdmin,
   };
 }

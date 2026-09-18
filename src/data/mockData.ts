@@ -996,6 +996,7 @@ export const INITIAL_ADMIN_USERS: AdminUser[] = [
     role: 'admin',
     active: true,
     lastLogin: '2026-09-14 14:10',
+    password: 'citrino@2024',
   },
   {
     id: 'usr-2',
@@ -1004,6 +1005,7 @@ export const INITIAL_ADMIN_USERS: AdminUser[] = [
     role: 'financeiro',
     active: true,
     lastLogin: '2026-09-14 11:25',
+    password: 'fin@2024',
   },
   {
     id: 'usr-3',
@@ -1012,5 +1014,6 @@ export const INITIAL_ADMIN_USERS: AdminUser[] = [
     role: 'operador',
     active: true,
     lastLogin: '2026-09-14 13:50',
+    password: 'op@2024',
   }
 ];

@@ -20,6 +20,7 @@ import { ResellerView } from './components/ecommerce/ResellerView';
 
 // Admin Components (Citrino ERP)
 import { AdminLayout, AdminModule } from './components/admin/AdminLayout';
+import { AdminLoginPage } from './components/admin/AdminLoginPage';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminProducts } from './components/admin/AdminProducts';
 import { AdminOrders } from './components/admin/AdminOrders';
@@ -30,7 +31,7 @@ import { AdminReports } from './components/admin/AdminReports';
 import { AdminSettings } from './components/admin/AdminSettings';
 
 export default function App() {
-  const { products } = useCitrinoStore();
+  const { products, adminSession, logoutAdmin } = useCitrinoStore();
 
   // Primary Navigation State
   const [currentView, setCurrentView] = useState<string>('home');
@@ -79,11 +80,27 @@ export default function App() {
 
   // If inside Admin Panel
   if (currentView === 'admin') {
+    // Show login page if not authenticated
+    if (!adminSession) {
+      return (
+        <AdminLoginPage
+          onSuccess={() => {
+            // adminSession now set in store — stay in admin view
+          }}
+          onBackToStore={() => setCurrentView('home')}
+        />
+      );
+    }
+
     return (
       <AdminLayout
         currentModule={adminModule}
         onSelectModule={(mod) => setAdminModule(mod)}
         onExitAdmin={() => setCurrentView('home')}
+        onLogout={() => {
+          logoutAdmin();
+          setCurrentView('home');
+        }}
       >
         {adminModule === 'dashboard' && (
           <AdminDashboard onNavigateModule={(mod) => setAdminModule(mod)} />

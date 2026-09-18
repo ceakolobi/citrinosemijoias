@@ -35,6 +35,7 @@ interface AdminLayoutProps {
   currentModule: AdminModule;
   onSelectModule: (module: AdminModule) => void;
   onExitAdmin: () => void;
+  onLogout?: () => void;
   children: React.ReactNode;
 }
 
@@ -42,6 +43,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   currentModule,
   onSelectModule,
   onExitAdmin,
+  onLogout,
   children,
 }) => {
   const { currentAdminUser, orders, products } = useCitrinoStore();
@@ -173,11 +175,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </button>
 
           <button
-            onClick={onExitAdmin}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-[#2A2D34] transition cursor-pointer"
+            onClick={onLogout || onExitAdmin}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-red-400 hover:bg-red-900/20 transition cursor-pointer"
           >
             <LogOut className="w-4 h-4 shrink-0" />
-            {sidebarOpen && <span>Sair do Painel</span>}
+            {sidebarOpen && <span>Sair / Encerrar Sessão</span>}
           </button>
         </div>
       </aside>

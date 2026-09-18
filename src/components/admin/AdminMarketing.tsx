@@ -307,7 +307,7 @@ export const AdminMarketing: React.FC = () => {
                     Banner #{idx + 1}
                   </span>
                   <img
-                    src={banner.imageUrl}
+                    src={banner.image}
                     alt={banner.title}
                     className="w-16 h-10 rounded object-cover border"
                   />
@@ -346,10 +346,10 @@ export const AdminMarketing: React.FC = () => {
                     <label className="font-semibold text-gray-700">URL da Imagem de Fundo</label>
                     <input
                       type="text"
-                      value={banner.imageUrl}
+                      value={banner.image}
                       onChange={(e) => {
                         const copy = [...bannersList];
-                        copy[idx].imageUrl = e.target.value;
+                        copy[idx].image = e.target.value;
                         setBannersList(copy);
                       }}
                       className="w-full bg-white border border-gray-300 rounded p-2 focus:outline-none focus:border-[#E97527]"
