@@ -21,6 +21,7 @@ import { ResellerView } from './components/ecommerce/ResellerView';
 // Admin Components (Citrino ERP)
 import { AdminLayout, AdminModule } from './components/admin/AdminLayout';
 import { AdminLoginPage } from './components/admin/AdminLoginPage';
+import { AdminErrorBoundary } from './components/admin/AdminErrorBoundary';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminProducts } from './components/admin/AdminProducts';
 import { AdminOrders } from './components/admin/AdminOrders';
@@ -92,9 +93,19 @@ export default function App() {
       );
     }
 
+    // Role guard: redirect to dashboard if current module is not allowed for this role
+    const role = adminSession.role;
+    const ROLE_MODULES: Record<string, AdminModule[]> = {
+      admin:      ['dashboard','products','orders','customers','financial','marketing','reports','settings'],
+      financeiro: ['dashboard','orders','financial','reports'],
+      operador:   ['dashboard','orders','products'],
+    };
+    const allowed = ROLE_MODULES[role] || ['dashboard'];
+    const safeModule: AdminModule = allowed.includes(adminModule) ? adminModule : 'dashboard';
+
     return (
       <AdminLayout
-        currentModule={adminModule}
+        currentModule={safeModule}
         onSelectModule={(mod) => setAdminModule(mod)}
         onExitAdmin={() => setCurrentView('home')}
         onLogout={() => {
@@ -102,16 +113,18 @@ export default function App() {
           setCurrentView('home');
         }}
       >
-        {adminModule === 'dashboard' && (
-          <AdminDashboard onNavigateModule={(mod) => setAdminModule(mod)} />
-        )}
-        {adminModule === 'products' && <AdminProducts />}
-        {adminModule === 'orders' && <AdminOrders />}
-        {adminModule === 'customers' && <AdminCustomers />}
-        {adminModule === 'financial' && <AdminFinancial />}
-        {adminModule === 'marketing' && <AdminMarketing />}
-        {adminModule === 'reports' && <AdminReports />}
-        {adminModule === 'settings' && <AdminSettings />}
+        <AdminErrorBoundary moduleName={safeModule}>
+          {safeModule === 'dashboard' && (
+            <AdminDashboard onNavigateModule={(mod) => setAdminModule(mod)} />
+          )}
+          {safeModule === 'products' && <AdminProducts />}
+          {safeModule === 'orders' && <AdminOrders />}
+          {safeModule === 'customers' && <AdminCustomers />}
+          {safeModule === 'financial' && <AdminFinancial />}
+          {safeModule === 'marketing' && <AdminMarketing />}
+          {safeModule === 'reports' && <AdminReports />}
+          {safeModule === 'settings' && <AdminSettings />}
+        </AdminErrorBoundary>
       </AdminLayout>
     );
   }

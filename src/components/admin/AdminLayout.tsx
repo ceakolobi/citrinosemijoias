@@ -46,24 +46,31 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onLogout,
   children,
 }) => {
-  const { currentAdminUser, orders, products } = useCitrinoStore();
+  const { currentAdminUser, adminSession, orders, products } = useCitrinoStore();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  const role = adminSession?.role || 'operador';
+  const isAdmin = role === 'admin';
+  const isFinanceiro = role === 'financeiro';
+
   const pendingOrdersCount = orders.filter((o) => o.status === 'aguardando' || o.status === 'pago').length;
   const lowStockCount = products.filter((p) => p.stock <= p.minStock).length;
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: null },
-    { id: 'orders', label: 'Gestão de Pedidos', icon: ShoppingCart, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null },
-    { id: 'products', label: 'Catálogo & Estoque', icon: Package, badge: lowStockCount > 0 ? `${lowStockCount} alertas` : null, badgeAlert: true },
-    { id: 'customers', label: 'Clientes & B2B', icon: Users, badge: null },
-    { id: 'financial', label: 'Financeiro & DRE', icon: DollarSign, badge: null },
-    { id: 'marketing', label: 'Marketing & Cupons', icon: Megaphone, badge: null },
-    { id: 'reports', label: 'Relatórios & Curva ABC', icon: BarChart3, badge: null },
-    { id: 'settings', label: 'Configurações', icon: Settings, badge: null },
+  // Modules visible per role
+  const ALL_NAV_ITEMS = [
+    { id: 'dashboard',  label: 'Dashboard',              icon: LayoutDashboard, badge: null, roles: ['admin', 'financeiro', 'operador'] },
+    { id: 'orders',     label: 'Gestão de Pedidos',       icon: ShoppingCart,    badge: pendingOrdersCount > 0 ? pendingOrdersCount : null, roles: ['admin', 'financeiro', 'operador'] },
+    { id: 'products',   label: 'Catálogo & Estoque',      icon: Package,         badge: lowStockCount > 0 ? `${lowStockCount} alertas` : null, badgeAlert: true, roles: ['admin', 'operador'] },
+    { id: 'customers',  label: 'Clientes & B2B',          icon: Users,           badge: null, roles: ['admin'] },
+    { id: 'financial',  label: 'Financeiro & DRE',        icon: DollarSign,      badge: null, roles: ['admin', 'financeiro'] },
+    { id: 'marketing',  label: 'Marketing & Cupons',      icon: Megaphone,       badge: null, roles: ['admin'] },
+    { id: 'reports',    label: 'Relatórios & Curva ABC',  icon: BarChart3,       badge: null, roles: ['admin', 'financeiro'] },
+    { id: 'settings',   label: 'Configurações',           icon: Settings,        badge: null, roles: ['admin'] },
   ];
+
+  const navItems = ALL_NAV_ITEMS.filter((item) => item.roles.includes(role));
 
   return (
     <div className="min-h-screen bg-[#F4F5F7] flex font-sans text-gray-800">

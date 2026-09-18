@@ -31,8 +31,6 @@ export const AccountView: React.FC<AccountViewProps> = ({
     orders,
     wishlist,
     products,
-    setCurrentCustomer,
-    customers,
   } = useCitrinoStore();
 
   const [activeTab, setActiveTab] = useState<string>(initialTab);
@@ -42,13 +40,6 @@ export const AccountView: React.FC<AccountViewProps> = ({
   );
 
   const wishlistProducts = products.filter((p) => wishlist.includes(p.id));
-
-  // Quick switcher between demo customers for easy reviewer testing
-  const handleSwitchCustomer = (idx: number) => {
-    if (customers[idx]) {
-      setCurrentCustomer(customers[idx]);
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -72,26 +63,6 @@ export const AccountView: React.FC<AccountViewProps> = ({
             <p className="text-xs text-[#777] mt-0.5">
               {currentCustomer?.email} • CPF/CNPJ: {currentCustomer?.document}
             </p>
-          </div>
-        </div>
-
-        {/* Demo Customer Switcher for fast testing */}
-        <div className="text-xs text-right space-y-1">
-          <span className="text-[11px] text-[#888] block">Alternar cliente de teste:</span>
-          <div className="flex flex-wrap gap-1.5 justify-end">
-            {customers.map((c, i) => (
-              <button
-                key={c.id}
-                onClick={() => handleSwitchCustomer(i)}
-                className={`px-2.5 py-1 rounded text-[11px] font-medium border transition ${
-                  currentCustomer?.id === c.id
-                    ? 'bg-[#1C1C1C] text-white border-[#1C1C1C]'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-[#C9A84C]'
-                }`}
-              >
-                {c.type === 'PJ' ? `🏢 ${c.fantasyName?.split(' ')[0] || c.name.split(' ')[0]}` : `👤 ${c.name.split(' ')[0]}`}
-              </button>
-            ))}
           </div>
         </div>
       </div>
