@@ -633,6 +633,8 @@ export function useCitrinoStore() {
     if (user) {
       const sessionUser = { ...user };
       sessionUser.lastLogin = new Date().toISOString().replace('T', ' ').substring(0, 16);
+      // Write to localStorage synchronously so AdminLayout reads the correct session on mount
+      setLocal(STORAGE_KEYS.ADMIN_SESSION, sessionUser);
       setAdminSession(sessionUser);
       setAdminUsers((prev) =>
         prev.map((u) => (u.id === user.id ? { ...u, lastLogin: sessionUser.lastLogin } : u))
@@ -643,6 +645,7 @@ export function useCitrinoStore() {
   };
 
   const logoutAdmin = () => {
+    setLocal(STORAGE_KEYS.ADMIN_SESSION, null);
     setAdminSession(null);
   };
 
