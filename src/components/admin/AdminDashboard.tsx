@@ -232,7 +232,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateModule
                       {ord.paymentMethod}
                     </td>
                     <td className="py-3 px-4 font-bold text-gray-900">
-                      R$ {ord.total.toFixed(2)}
+                      R$ {(ord.total ?? 0).toFixed(2)}
                     </td>
                     <td className="py-3 px-4">
                       <span
@@ -285,7 +285,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateModule
                 <div className="flex-1 min-w-0 text-xs">
                   <p className="font-semibold text-gray-800 truncate">{p.name}</p>
                   <span className="text-[11px] text-gray-500">
-                    {p.material} • R$ {(p.promoPrice || p.price).toFixed(2)}
+                    {p.material} • R$ {((p.promoPrice || p.price) ?? 0).toFixed(2)}
                   </span>
                 </div>
                 <div className="text-right text-xs">

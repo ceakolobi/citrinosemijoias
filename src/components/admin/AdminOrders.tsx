@@ -171,7 +171,7 @@ export const AdminOrders: React.FC = () => {
 
                     {/* Total */}
                     <td className="py-3 px-4 font-bold text-gray-900">
-                      R$ {order.total.toFixed(2)}
+                      R$ {(order.total ?? 0).toFixed(2)}
                     </td>
 
                     {/* Payment */}
@@ -287,7 +287,7 @@ export const AdminOrders: React.FC = () => {
                   CEP: {selectedOrder.shippingAddress.cep}
                 </p>
                 <p className="text-[11px] text-gray-500">
-                  Custo frete: R$ {selectedOrder.shippingPrice.toFixed(2)}
+                  Custo frete: R$ {(selectedOrder.shippingPrice ?? 0).toFixed(2)}
                 </p>
               </div>
             </div>
@@ -345,8 +345,8 @@ export const AdminOrders: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-gray-600 block">{item.quantity}x R$ {item.price.toFixed(2)}</span>
-                      <strong className="text-gray-900">R$ {(item.price * item.quantity).toFixed(2)}</strong>
+                      <span className="text-gray-600 block">{item.quantity}x R$ {(item.price ?? 0).toFixed(2)}</span>
+                      <strong className="text-gray-900">R$ {((item.price ?? 0) * item.quantity).toFixed(2)}</strong>
                     </div>
                   </div>
                 ))}
@@ -357,21 +357,21 @@ export const AdminOrders: React.FC = () => {
             <div className="bg-[#F8F9FA] p-4 rounded-xl space-y-1.5 text-xs text-gray-600">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span className="font-semibold text-gray-900">R$ {selectedOrder.subtotal.toFixed(2)}</span>
+                <span className="font-semibold text-gray-900">R$ {(selectedOrder.subtotal ?? 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Frete:</span>
-                <span>R$ {selectedOrder.shippingPrice.toFixed(2)}</span>
+                <span>R$ {(selectedOrder.shippingPrice ?? 0).toFixed(2)}</span>
               </div>
-              {selectedOrder.discountPrice > 0 && (
+              {(selectedOrder.discountPrice ?? 0) > 0 && (
                 <div className="flex justify-between text-red-600 font-semibold">
                   <span>Desconto:</span>
-                  <span>- R$ {selectedOrder.discountPrice.toFixed(2)}</span>
+                  <span>- R$ {(selectedOrder.discountPrice ?? 0).toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm font-bold text-gray-900 pt-1 border-t border-gray-200">
                 <span>Valor Total:</span>
-                <span>R$ {selectedOrder.total.toFixed(2)}</span>
+                <span>R$ {(selectedOrder.total ?? 0).toFixed(2)}</span>
               </div>
             </div>
 

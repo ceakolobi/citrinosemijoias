@@ -135,7 +135,7 @@ export const AdminReports: React.FC = () => {
             Ticket Médio • Varejo B2C
           </span>
           <p className="text-2xl font-bold text-gray-900">
-            R$ {retailAvgTicket.toFixed(2)}
+            R$ {(retailAvgTicket ?? 0).toFixed(2)}
           </p>
           <p className="text-[11px] text-gray-500">Média de 1.8 peças por pedido de pessoa física</p>
         </div>
@@ -145,7 +145,7 @@ export const AdminReports: React.FC = () => {
             Ticket Médio • Atacado B2B
           </span>
           <p className="text-2xl font-bold text-[#E97527]">
-            R$ {wholesaleAvgTicket.toFixed(2)}
+            R$ {(wholesaleAvgTicket ?? 0).toFixed(2)}
           </p>
           <p className="text-[11px] text-[#E97527] font-semibold">
             {wholesaleAvgTicket > 0 ? `${(wholesaleAvgTicket / (retailAvgTicket || 1)).toFixed(1)}x maior que o varejo` : 'Sem compras atacado'}
@@ -177,7 +177,7 @@ export const AdminReports: React.FC = () => {
                 <div key={cat} className="space-y-1">
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-800">{cat}</span>
-                    <span className="font-bold text-gray-900">R$ {rev.toFixed(2)} ({pct.toFixed(0)}%)</span>
+                    <span className="font-bold text-gray-900">R$ {(rev ?? 0).toFixed(2)} ({pct.toFixed(0)}%)</span>
                   </div>
                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
@@ -201,7 +201,7 @@ export const AdminReports: React.FC = () => {
                 <div key={mat} className="space-y-1">
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-800">{mat}</span>
-                    <span className="font-bold text-gray-900">R$ {rev.toFixed(2)} ({pct.toFixed(0)}%)</span>
+                    <span className="font-bold text-gray-900">R$ {(rev ?? 0).toFixed(2)} ({pct.toFixed(0)}%)</span>
                   </div>
                   <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
@@ -263,7 +263,7 @@ export const AdminReports: React.FC = () => {
                   <td className="py-3 px-4 text-gray-600">{item.product.category}</td>
                   <td className="py-3 px-4 text-center font-bold text-gray-900">{item.salesCount}</td>
                   <td className="py-3 px-4 text-right font-bold text-gray-900">
-                    R$ {item.totalGenerated.toFixed(2)}
+                    R$ {(item.totalGenerated ?? 0).toFixed(2)}
                   </td>
                   <td className="py-3 px-4 text-center font-medium text-gray-700">
                     {item.product.stock} un.

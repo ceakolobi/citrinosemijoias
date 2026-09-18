@@ -114,7 +114,7 @@ export const AdminFinancial: React.FC = () => {
             </div>
           </div>
           <p className="text-2xl font-bold text-emerald-700">
-            R$ {totalRevenue.toFixed(2)}
+            R$ {(totalRevenue ?? 0).toFixed(2)}
           </p>
         </div>
 
@@ -126,7 +126,7 @@ export const AdminFinancial: React.FC = () => {
             </div>
           </div>
           <p className="text-2xl font-bold text-red-600">
-            R$ {totalExpenses.toFixed(2)}
+            R$ {(totalExpenses ?? 0).toFixed(2)}
           </p>
         </div>
 
@@ -138,7 +138,7 @@ export const AdminFinancial: React.FC = () => {
             </div>
           </div>
           <p className="text-2xl font-bold text-gray-900">
-            R$ {netBalance.toFixed(2)}
+            R$ {(netBalance ?? 0).toFixed(2)}
           </p>
         </div>
       </div>
@@ -232,7 +232,7 @@ export const AdminFinancial: React.FC = () => {
                           item.type === 'receita' ? 'text-emerald-700' : 'text-red-600'
                         }`}
                       >
-                        {item.type === 'receita' ? '+' : '-'} R$ {item.amount.toFixed(2)}
+                        {item.type === 'receita' ? '+' : '-'} R$ {(item.amount ?? 0).toFixed(2)}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <span
@@ -270,15 +270,15 @@ export const AdminFinancial: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
               <span className="text-xs text-gray-500 block">Total Bruto Transacionado</span>
-              <strong className="text-xl text-gray-900">R$ {totalGrossMP.toFixed(2)}</strong>
+              <strong className="text-xl text-gray-900">R$ {(totalGrossMP ?? 0).toFixed(2)}</strong>
             </div>
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
               <span className="text-xs text-gray-500 block">Taxas Mercado Pago Descontadas</span>
-              <strong className="text-xl text-red-600">- R$ {totalFeesMP.toFixed(2)}</strong>
+              <strong className="text-xl text-red-600">- R$ {(totalFeesMP ?? 0).toFixed(2)}</strong>
             </div>
             <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
               <span className="text-xs text-gray-500 block">Valor Líquido Citrino</span>
-              <strong className="text-xl text-emerald-700">R$ {totalNetMP.toFixed(2)}</strong>
+              <strong className="text-xl text-emerald-700">R$ {(totalNetMP ?? 0).toFixed(2)}</strong>
             </div>
           </div>
 
@@ -301,9 +301,9 @@ export const AdminFinancial: React.FC = () => {
                     <td className="py-3 px-4 font-mono font-bold text-gray-900">{sale.orderNumber}</td>
                     <td className="py-3 px-4 text-gray-700">{sale.customer}</td>
                     <td className="py-3 px-4 uppercase text-[11px] font-semibold">{sale.method}</td>
-                    <td className="py-3 px-4 text-gray-900 font-medium">R$ {sale.gross.toFixed(2)}</td>
-                    <td className="py-3 px-4 text-red-600 font-medium">- R$ {sale.fee.toFixed(2)}</td>
-                    <td className="py-3 px-4 text-emerald-700 font-bold">R$ {sale.net.toFixed(2)}</td>
+                    <td className="py-3 px-4 text-gray-900 font-medium">R$ {(sale.gross ?? 0).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-red-600 font-medium">- R$ {(sale.fee ?? 0).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-emerald-700 font-bold">R$ {(sale.net ?? 0).toFixed(2)}</td>
                     <td className="py-3 px-4 text-right">
                       <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
                         {sale.status}
@@ -330,32 +330,32 @@ export const AdminFinancial: React.FC = () => {
           <div className="space-y-2.5">
             <div className="flex justify-between py-1.5 font-bold text-sm text-gray-900 border-b">
               <span>(=) RECEITA BRUTA DE VENDAS</span>
-              <span>R$ {totalRevenue.toFixed(2)}</span>
+              <span>R$ {(totalRevenue ?? 0).toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between text-gray-600 pl-4">
               <span>(-) Deduções e Taxas Mercado Pago (Média 2.8%)</span>
-              <span className="text-red-600">- R$ {(totalRevenue * 0.028).toFixed(2)}</span>
+              <span className="text-red-600">- R$ {((totalRevenue ?? 0) * 0.028).toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between text-gray-600 pl-4">
               <span>(-) Impostos Simples Nacional (Anexo I - 6.5%)</span>
-              <span className="text-red-600">- R$ {(totalRevenue * 0.065).toFixed(2)}</span>
+              <span className="text-red-600">- R$ {((totalRevenue ?? 0) * 0.065).toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between py-1.5 font-bold text-gray-800 border-t border-b">
               <span>(=) RECEITA LÍQUIDA</span>
-              <span>R$ {(totalRevenue * 0.907).toFixed(2)}</span>
+              <span>R$ {((totalRevenue ?? 0) * 0.907).toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between text-gray-600 pl-4">
               <span>(-) Custo de Mercadorias Vendidas (CMV Brutos e Banho Limeira)</span>
-              <span className="text-red-600">- R$ {(totalRevenue * 0.28).toFixed(2)}</span>
+              <span className="text-red-600">- R$ {((totalRevenue ?? 0) * 0.28).toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between py-1.5 font-bold text-emerald-800 bg-emerald-50/50 px-2 rounded">
               <span>(=) LUCRO BRUTO OPERACIONAL</span>
-              <span>R$ {(totalRevenue * 0.627).toFixed(2)}</span>
+              <span>R$ {((totalRevenue ?? 0) * 0.627).toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between text-gray-600 pl-4">
@@ -371,7 +371,7 @@ export const AdminFinancial: React.FC = () => {
             <div className="flex justify-between py-2 font-bold text-base text-gray-900 border-t-2 border-gray-900">
               <span>(=) LUCRO LÍQUIDO DO PERÍODO</span>
               <span className="text-emerald-700">
-                R$ {(totalRevenue * 0.627 - 430).toFixed(2)}
+                R$ {((totalRevenue ?? 0) * 0.627 - 430).toFixed(2)}
               </span>
             </div>
           </div>

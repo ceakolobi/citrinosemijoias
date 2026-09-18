@@ -156,10 +156,10 @@ export const AdminMarketing: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4 font-bold text-gray-900">
-                      {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `R$ ${c.discountValue.toFixed(2)} OFF`}
+                      {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `R$ ${(c.discountValue ?? 0).toFixed(2)} OFF`}
                     </td>
                     <td className="py-3 px-4 text-gray-600">
-                      {c.minOrderValue ? `R$ ${c.minOrderValue.toFixed(2)}` : 'Sem mínimo'}
+                      {c.minOrderValue ? `R$ ${(c.minOrderValue ?? 0).toFixed(2)}` : 'Sem mínimo'}
                     </td>
                     <td className="py-3 px-4 text-gray-500">
                       {c.expiryDate}

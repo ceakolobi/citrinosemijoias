@@ -277,19 +277,19 @@ export const AdminProducts: React.FC = () => {
                     <td className="py-3 px-4 space-y-0.5">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-gray-900">
-                          R$ {product.price.toFixed(2)}
+                          R$ {(product.price ?? 0).toFixed(2)}
                         </span>
                         {product.promoPrice && (
                           <span className="text-[10px] text-emerald-700 bg-emerald-50 font-bold px-1.5 py-0.2 rounded">
-                            Promo: R$ {product.promoPrice.toFixed(2)}
+                            Promo: R$ {(product.promoPrice ?? 0).toFixed(2)}
                           </span>
                         )}
                       </div>
                       <div className="text-[11px] text-gray-500 flex gap-2">
-                        <span>Custo: R$ {product.costPrice.toFixed(2)}</span>
+                        <span>Custo: R$ {(product.costPrice ?? 0).toFixed(2)}</span>
                         <span>•</span>
                         <span className="text-emerald-700 font-semibold">
-                          Margem: {margin.toFixed(0)}%
+                          Margem: {(margin ?? 0).toFixed(0)}%
                         </span>
                       </div>
                     </td>
