@@ -89,7 +89,7 @@ const DEFAULT_COMPANY_SETTINGS: CompanySettings = {
   cnpj: '48.910.382/0001-44',
   stateRegistration: '108.924.110.290',
   phone: '(11) 3450-8800',
-  whatsapp: '(11) 98765-4321',
+  whatsapp: '(47) 9698-2679',
   email: 'contato@citrinosemijoias.com.br',
   address: 'Rua Oscar Freire, 920 - Cerqueira César',
   city: 'São Paulo',
@@ -153,7 +153,7 @@ export function useCitrinoStore() {
   const [coupons, setCoupons] = useState<Coupon[]>(() => getLocal(STORAGE_KEYS.COUPONS, INITIAL_COUPONS));
   const [banners, setBanners] = useState<HomeBanner[]>(() => getLocal(STORAGE_KEYS.BANNERS, INITIAL_BANNERS));
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>(() => getLocal(STORAGE_KEYS.ADMIN_USERS, INITIAL_ADMIN_USERS));
-  const [companySettings, setCompanySettings] = useState<CompanySettings>(() => getLocal('citrino_settings_v1', DEFAULT_COMPANY_SETTINGS));
+  const [companySettings, setCompanySettings] = useState<CompanySettings>(() => getLocal('citrino_settings_v2', DEFAULT_COMPANY_SETTINGS));
 
   // E-commerce interactive state
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -189,7 +189,7 @@ export function useCitrinoStore() {
   useEffect(() => { setLocal(STORAGE_KEYS.WISHLIST, wishlist); }, [wishlist]);
   useEffect(() => { setLocal(STORAGE_KEYS.CURRENT_USER, currentCustomer); }, [currentCustomer]);
   useEffect(() => { setLocal(STORAGE_KEYS.ACTIVE_ROLE, activeAdminRole); }, [activeAdminRole]);
-  useEffect(() => { setLocal('citrino_settings_v1', companySettings); }, [companySettings]);
+  useEffect(() => { setLocal('citrino_settings_v2', companySettings); }, [companySettings]);
   useEffect(() => { setLocal(STORAGE_KEYS.ADMIN_SESSION, adminSession); }, [adminSession]);
 
   // Cart actions

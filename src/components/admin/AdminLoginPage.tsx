@@ -126,24 +126,6 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
               )}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <p className="text-gray-600 text-xs text-center mb-3">Credenciais de acesso:</p>
-            <div className="space-y-1.5 text-xs font-mono">
-              <div className="flex justify-between bg-[#1C1C1C] rounded-lg px-3 py-2">
-                <span className="text-gray-500">admin@citrinosemijoias.com.br</span>
-                <span className="text-[#C9A84C]">citrino@2024</span>
-              </div>
-              <div className="flex justify-between bg-[#1C1C1C] rounded-lg px-3 py-2">
-                <span className="text-gray-500">financeiro@citrinosemijoias.com.br</span>
-                <span className="text-[#C9A84C]">fin@2024</span>
-              </div>
-              <div className="flex justify-between bg-[#1C1C1C] rounded-lg px-3 py-2">
-                <span className="text-gray-500">operador@citrinosemijoias.com.br</span>
-                <span className="text-[#C9A84C]">op@2024</span>
-              </div>
-            </div>
           </div>
         </div>
 
