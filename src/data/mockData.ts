@@ -1015,5 +1015,14 @@ export const INITIAL_ADMIN_USERS: AdminUser[] = [
     active: true,
     lastLogin: '2026-09-14 13:50',
     password: 'op@2024',
+  },
+  {
+    id: 'usr-4',
+    name: 'Mariah',
+    email: 'mariah@citrinosemijoias.com.br',
+    role: 'admin',
+    active: true,
+    lastLogin: '',
+    password: 'Mariah@Citrino2024',
   }
 ];

@@ -39,7 +39,7 @@ const STORAGE_KEYS = {
   PAYABLES: 'citrino_payables_v1',
   COUPONS: 'citrino_coupons_v1',
   BANNERS: 'citrino_banners_v1',
-  ADMIN_USERS: 'citrino_admin_users_v2',  // bumped to v2 to force re-seed with passwords
+  ADMIN_USERS: 'citrino_admin_users_v3',  // bumped to v3 to add Mariah admin user
   CART: 'citrino_cart_v1',
   WISHLIST: 'citrino_wishlist_v1',
   CURRENT_USER: 'citrino_current_user_v1',
