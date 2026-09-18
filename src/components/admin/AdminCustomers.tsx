@@ -167,7 +167,9 @@ export const AdminCustomers: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredCustomers.map((cust) => {
-                const ticketMedio = cust.orderCount > 0 ? cust.totalSpent / cust.orderCount : 0;
+                const totalSpent = cust.totalSpent ?? 0;
+                const orderCount = cust.orderCount ?? 0;
+                const ticketMedio = orderCount > 0 ? totalSpent / orderCount : 0;
                 const phoneClean = cust.phone.replace(/\D/g, '');
 
                 return (
@@ -216,8 +218,8 @@ export const AdminCustomers: React.FC = () => {
 
                     {/* Orders & Total */}
                     <td className="py-3 px-4 text-center">
-                      <strong className="text-gray-900 block">R$ {cust.totalSpent.toFixed(2)}</strong>
-                      <span className="text-[10px] text-gray-500">{cust.orderCount} pedido(s)</span>
+                      <strong className="text-gray-900 block">R$ {totalSpent.toFixed(2)}</strong>
+                      <span className="text-[10px] text-gray-500">{orderCount} pedido(s)</span>
                     </td>
 
                     {/* Ticket Médio */}
@@ -299,16 +301,16 @@ export const AdminCustomers: React.FC = () => {
             <div className="p-4 bg-orange-50/60 border border-orange-200 rounded-xl flex items-center justify-around text-center">
               <div>
                 <span className="text-[11px] text-gray-500 block">Total Comprado</span>
-                <strong className="text-base text-gray-900">R$ {selectedCustomer.totalSpent.toFixed(2)}</strong>
+                <strong className="text-base text-gray-900">R$ {(selectedCustomer.totalSpent ?? 0).toFixed(2)}</strong>
               </div>
               <div>
                 <span className="text-[11px] text-gray-500 block">Qtd. Pedidos</span>
-                <strong className="text-base text-gray-900">{selectedCustomer.orderCount}</strong>
+                <strong className="text-base text-gray-900">{selectedCustomer.orderCount ?? 0}</strong>
               </div>
               <div>
                 <span className="text-[11px] text-gray-500 block">Ticket Médio</span>
                 <strong className="text-base text-gray-900">
-                  R$ {(selectedCustomer.orderCount > 0 ? selectedCustomer.totalSpent / selectedCustomer.orderCount : 0).toFixed(2)}
+                  R$ {((selectedCustomer.orderCount ?? 0) > 0 ? (selectedCustomer.totalSpent ?? 0) / (selectedCustomer.orderCount ?? 1) : 0).toFixed(2)}
                 </strong>
               </div>
             </div>
