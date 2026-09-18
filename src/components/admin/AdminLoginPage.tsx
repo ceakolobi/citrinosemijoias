@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react';
-import { useCitrinoStore } from '../../services/store';
 
 interface AdminLoginPageProps {
   onSuccess: () => void;
   onBackToStore: () => void;
+  onLogin: (email: string, password: string) => boolean;
 }
 
-export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBackToStore }) => {
-  const { loginAdmin } = useCitrinoStore();
+export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBackToStore, onLogin }) => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +21,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
     setLoading(true);
 
     setTimeout(() => {
-      const ok = loginAdmin(email.trim(), password);
+      const ok = onLogin(email.trim(), password);
       setLoading(false);
       if (ok) {
         onSuccess();

@@ -32,7 +32,7 @@ import { AdminReports } from './components/admin/AdminReports';
 import { AdminSettings } from './components/admin/AdminSettings';
 
 export default function App() {
-  const { products, adminSession, logoutAdmin } = useCitrinoStore();
+  const { products, adminSession, logoutAdmin, loginAdmin } = useCitrinoStore();
 
   // Primary Navigation State
   const [currentView, setCurrentView] = useState<string>('home');
@@ -85,9 +85,8 @@ export default function App() {
     if (!adminSession) {
       return (
         <AdminLoginPage
-          onSuccess={() => {
-            // adminSession now set in store — stay in admin view
-          }}
+          onLogin={loginAdmin}
+          onSuccess={() => { /* adminSession set in App's store instance — re-render happens automatically */ }}
           onBackToStore={() => setCurrentView('home')}
         />
       );
