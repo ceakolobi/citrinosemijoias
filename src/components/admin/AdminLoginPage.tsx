@@ -4,7 +4,7 @@ import { Lock, Mail, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react'
 interface AdminLoginPageProps {
   onSuccess: () => void;
   onBackToStore: () => void;
-  onLogin: (email: string, password: string) => boolean;
+  onLogin: (email: string, password: string) => Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
 export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBackToStore, onLogin }) => {
@@ -15,20 +15,22 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
-    setTimeout(() => {
-      const ok = onLogin(email.trim(), password);
-      setLoading(false);
-      if (ok) {
+    try {
+      const res = await onLogin(email.trim(), password);
+      if (res.ok) {
         onSuccess();
       } else {
-        setError('E-mail ou senha incorretos. Verifique suas credenciais.');
+        setError((res as { error: string }).error);
       }
-    }, 500);
+    } catch {
+      setError('Não foi possível entrar agora. Confira a internet e tente de novo.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,7 +70,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onSuccess, onBac
                   required
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(null); }}
-                  placeholder="seu@citrinosemijoias.com.br"
+                  placeholder="seu@email.com"
                   className="w-full bg-[#1C1C1C] border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#C9A84C]/50 focus:ring-1 focus:ring-[#C9A84C]/30 transition"
                 />
               </div>

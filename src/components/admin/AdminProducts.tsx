@@ -2,145 +2,176 @@ import React, { useState } from 'react';
 import { 
   Plus, 
   Search, 
-  Filter, 
   Edit3, 
   Trash2, 
   AlertTriangle, 
-  Check, 
   X, 
-  Upload, 
-  Image as ImageIcon,
-  DollarSign,
-  Tag,
-  Layers,
-  Scale,
-  Sparkles
+  Loader2
 } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
-import { Product, ProductVariation } from '../../types';
+import { Product, ProductVariation, ProductMaterial, ProductStone } from '../../types';
+import { ImageUploader } from './ImageUploader';
 
 export const AdminProducts: React.FC = () => {
-  const { products, categories, addProduct, updateProduct, deleteProduct } = useCitrinoStore();
+  const { allProducts: products, categories, addProduct, updateProduct, deleteProduct } = useCitrinoStore();
 
   const [search, setSearch] = useState<string>('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterPlating, setFilterPlating] = useState<string>('all');
   const [filterStockStatus, setFilterStockStatus] = useState<string>('all');
+  const [listError, setListError] = useState<string | null>(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Form fields
   const [formName, setFormName] = useState<string>('');
   const [formSku, setFormSku] = useState<string>('');
   const [formCategory, setFormCategory] = useState<string>('Anéis');
-  const [formMaterial, setFormMaterial] = useState<string>('Ouro 18k');
   const [formPlating, setFormPlating] = useState<string>('Banho de Ouro 18k (10 milésimos)');
   const [formStone, setFormStone] = useState<string>('Citrino Natural');
-  const [formWeight, setFormWeight] = useState<number>(4.2);
-  const [formCostPrice, setFormCostPrice] = useState<number>(45.00);
-  const [formPrice, setFormPrice] = useState<number>(189.90);
-  const [formPromoPrice, setFormPromoPrice] = useState<string>('159.90');
-  const [formWholesalePrice, setFormWholesalePrice] = useState<number>(110.00);
-  const [formStock, setFormStock] = useState<number>(15);
+  const [formWeight, setFormWeight] = useState<number>(0);
+  const [formCostPrice, setFormCostPrice] = useState<number>(0);
+  const [formPrice, setFormPrice] = useState<number>(0);
+  const [formPromoPrice, setFormPromoPrice] = useState<string>('');
+  const [formWholesalePrice, setFormWholesalePrice] = useState<number>(0);
+  const [formStock, setFormStock] = useState<number>(0);
   const [formMinStock, setFormMinStock] = useState<number>(3);
   const [formDescription, setFormDescription] = useState<string>('');
-  const [formImageUrl, setFormImageUrl] = useState<string>('https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop');
-  const [formVariations, setFormVariations] = useState<ProductVariation[]>([
-    { id: 'v1', name: 'Aro 16', stock: 5 },
-    { id: 'v2', name: 'Aro 18', stock: 5 },
-    { id: 'v3', name: 'Aro 20', stock: 5 },
-  ]);
+  const [formDetails, setFormDetails] = useState<string>('');
+  const [formImages, setFormImages] = useState<string[]>([]);
+  const [formVariations, setFormVariations] = useState<ProductVariation[]>([]);
+  const [formActive, setFormActive] = useState<boolean>(true);
+  const [formFeatured, setFormFeatured] = useState<boolean>(false);
+  const [formBestSeller, setFormBestSeller] = useState<boolean>(false);
+  const [formIsNew, setFormIsNew] = useState<boolean>(true);
 
   // Open Create Modal
   const handleOpenCreate = () => {
     setEditingProduct(null);
+    setFormError(null);
     setFormName('');
     setFormSku(`CIT-${Math.floor(1000 + Math.random() * 9000)}`);
-    setFormCategory('Anéis');
-    setFormMaterial('Ouro 18k');
+    setFormCategory(categories[0]?.name || 'Anéis');
     setFormPlating('Banho de Ouro 18k (10 milésimos)');
-    setFormStone('Citrino Natural');
-    setFormWeight(3.5);
-    setFormCostPrice(40.00);
-    setFormPrice(179.90);
+    setFormStone('');
+    setFormWeight(0);
+    setFormCostPrice(0);
+    setFormPrice(0);
     setFormPromoPrice('');
-    setFormWholesalePrice(105.00);
-    setFormStock(12);
+    setFormWholesalePrice(0);
+    setFormStock(0);
     setFormMinStock(3);
-    setFormDescription('Peça exclusiva desenvolvida com altíssimo padrão de acabamento joalheiro.');
-    setFormImageUrl('https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop');
-    setFormVariations([
-      { id: 'v1', name: 'Aro 16', stock: 4 },
-      { id: 'v2', name: 'Aro 18', stock: 4 },
-      { id: 'v3', name: 'Aro 20', stock: 4 },
-    ]);
+    setFormDescription('');
+    setFormDetails('');
+    setFormImages([]);
+    setFormVariations([]);
+    setFormActive(true);
+    setFormFeatured(false);
+    setFormBestSeller(false);
+    setFormIsNew(true);
     setIsModalOpen(true);
   };
 
   // Open Edit Modal
   const handleOpenEdit = (p: Product) => {
     setEditingProduct(p);
+    setFormError(null);
     setFormName(p.name);
     setFormSku(p.sku);
     setFormCategory(p.category);
-    setFormMaterial(p.material);
     setFormPlating(p.plating);
     setFormStone(p.stone);
-    setFormWeight(p.weightGrams);
-    setFormCostPrice(p.costPrice);
+    setFormWeight(p.weightGrams ?? 0);
+    setFormCostPrice(p.costPrice ?? 0);
     setFormPrice(p.price);
     setFormPromoPrice(p.promoPrice ? String(p.promoPrice) : '');
-    setFormWholesalePrice(p.wholesalePrice);
+    setFormWholesalePrice(p.wholesalePrice ?? 0);
     setFormStock(p.stock);
-    setFormMinStock(p.minStock);
+    setFormMinStock(p.minStock ?? 0);
     setFormDescription(p.description);
-    setFormImageUrl(p.images[0] || '');
-    setFormVariations(p.variations || []);
+    setFormDetails((p.details || []).join('\n'));
+    setFormImages(p.images || []);
+    setFormVariations((p.variations || []).map((v) => ({ ...v })));
+    setFormActive(p.active !== false);
+    setFormFeatured(Boolean(p.featured));
+    setFormBestSeller(Boolean(p.bestSeller));
+    setFormIsNew(Boolean(p.isNew));
     setIsModalOpen(true);
   };
 
   // Handle Save
-  const handleSaveProduct = (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
 
-    const productData: Omit<Product, 'id'> = {
-      name: formName,
-      sku: formSku,
+    if (formImages.length === 0) {
+      setFormError('Adicione pelo menos uma foto do produto.');
+      return;
+    }
+    if (!(Number(formPrice) > 0)) {
+      setFormError('Informe o preço de venda.');
+      return;
+    }
+    const promo = formPromoPrice ? Number(formPromoPrice) : undefined;
+    if (promo !== undefined && !(promo > 0 && promo < Number(formPrice))) {
+      setFormError('O preço promocional precisa ser menor que o preço de venda.');
+      return;
+    }
+
+    // Ao editar, preserva tudo que a tela não mostra (avaliações, coleção, garantia...).
+    const productData = {
+      ...(editingProduct || { rating: 0, reviewCount: 0, warranty: '1 ano no banho' }),
+      name: formName.trim(),
+      sku: formSku.trim(),
       category: formCategory,
-      material: formMaterial,
+      material: (editingProduct?.material || 'Ouro 18k') as ProductMaterial,
       plating: formPlating,
-      stone: formStone,
+      stone: formStone as ProductStone,
       weightGrams: Number(formWeight),
       costPrice: Number(formCostPrice),
       price: Number(formPrice),
-      promoPrice: formPromoPrice ? Number(formPromoPrice) : undefined,
+      promoPrice: promo,
       wholesalePrice: Number(formWholesalePrice),
       stock: Number(formStock),
       minStock: Number(formMinStock),
-      active: true,
-      images: [formImageUrl],
+      active: formActive,
+      featured: formFeatured,
+      bestSeller: formBestSeller,
+      isNew: formIsNew,
+      images: formImages,
       description: formDescription,
-      details: [
-        `Peso aproximado: ${formWeight}g`,
-        `Banho de alta resistência com verniz Diamond`,
-        `Livre de níquel e cádmio`,
-      ],
-      variations: formVariations,
-      rating: 5.0,
-      reviewCount: 1,
-      warranty: '1 ano no banho nobre e cravação',
-      isNew: true,
-    };
+      details: formDetails.split('\n').map((l) => l.trim()).filter(Boolean),
+      variations: formVariations
+        .filter((v) => v.name.trim())
+        .map((v, i) => ({ id: v.id || `v-${Date.now()}-${i}`, name: v.name.trim(), stock: Number(v.stock) || 0 })),
+    } as Omit<Product, 'id'>;
 
-    if (editingProduct) {
-      updateProduct(editingProduct.id, productData);
-    } else {
-      addProduct(productData);
+    setSaving(true);
+    try {
+      const res = editingProduct
+        ? await updateProduct(editingProduct.id, productData)
+        : await addProduct(productData);
+      if (res.ok === true) {
+        setIsModalOpen(false);
+      } else {
+        setFormError((res as { error: string }).error);
+      }
+    } catch (err: any) {
+      setFormError(err?.message || 'Não foi possível salvar agora.');
+    } finally {
+      setSaving(false);
     }
+  };
 
-    setIsModalOpen(false);
+  const handleDelete = async (product: Product) => {
+    if (!confirm(`Excluir permanentemente "${product.name}"?`)) return;
+    setListError(null);
+    const res = await deleteProduct(product.id);
+    if (res.ok !== true) setListError((res as { error: string }).error);
   };
 
   // Filter products
@@ -219,6 +250,13 @@ export const AdminProducts: React.FC = () => {
         </div>
       </div>
 
+      {listError && (
+        <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span>{listError}</span>
+        </div>
+      )}
+
       {/* Products Table */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
@@ -236,8 +274,8 @@ export const AdminProducts: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredProducts.map((product) => {
-                const isLow = product.stock <= product.minStock;
-                const margin = ((product.price - product.costPrice) / product.price) * 100;
+                const isLow = product.stock <= (product.minStock ?? 0);
+                const margin = product.price > 0 ? ((product.price - (product.costPrice ?? 0)) / product.price) * 100 : 0;
 
                 return (
                   <tr key={product.id} className="hover:bg-gray-50/80 transition">
@@ -252,6 +290,11 @@ export const AdminProducts: React.FC = () => {
                         <div className="min-w-0">
                           <p className="font-semibold text-gray-900 truncate max-w-[200px]">
                             {product.name}
+                            {product.active === false && (
+                              <span className="ml-2 text-[9px] font-bold uppercase bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded align-middle">
+                                Oculto na loja
+                              </span>
+                            )}
                           </p>
                           <span className="text-[11px] text-gray-400">
                             {product.stone} • {product.weightGrams}g
@@ -331,11 +374,7 @@ export const AdminProducts: React.FC = () => {
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm(`Excluir permanentemente "${product.name}"?`)) {
-                              deleteProduct(product.id);
-                            }
-                          }}
+                          onClick={() => handleDelete(product)}
                           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition"
                           title="Excluir Produto"
                         >
@@ -354,7 +393,7 @@ export const AdminProducts: React.FC = () => {
       {/* CREATE / EDIT MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full min-w-0 p-4 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto overflow-x-hidden">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#E97527]">
@@ -528,24 +567,20 @@ export const AdminProducts: React.FC = () => {
                 </div>
               </div>
 
-              {/* Photo URL */}
+              {/* Photos */}
               <div className="space-y-1">
-                <label className="font-semibold text-gray-700">URL da Foto Principal</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={formImageUrl}
-                    onChange={(e) => setFormImageUrl(e.target.value)}
-                    className="flex-1 bg-[#F4F5F7] border border-gray-200 rounded-lg p-2.5 focus:border-[#E97527] focus:outline-none"
-                  />
-                  {formImageUrl && (
-                    <img
-                      src={formImageUrl}
-                      alt="Prévia"
-                      className="w-10 h-10 rounded-lg object-cover border border-gray-200 shrink-0"
-                    />
-                  )}
-                </div>
+                <label className="font-semibold text-gray-700">Fotos do produto *</label>
+                <ImageUploader
+                  value={formImages}
+                  onChange={setFormImages}
+                  folder="produtos"
+                  max={8}
+                  maxSide={1600}
+                  globalPaste
+                />
+                <p className="text-[10px] text-gray-500">
+                  A primeira foto aparece na vitrine; a segunda aparece ao passar o mouse.
+                </p>
               </div>
 
               {/* Description */}
@@ -559,10 +594,110 @@ export const AdminProducts: React.FC = () => {
                 />
               </div>
 
+              {/* Details */}
+              <div className="space-y-1">
+                <label className="font-semibold text-gray-700">Detalhes da peça (um por linha)</label>
+                <textarea
+                  rows={4}
+                  value={formDetails}
+                  onChange={(e) => setFormDetails(e.target.value)}
+                  placeholder={'Comprimento: 45cm + extensor de 5cm\nBanho: 10 milésimos de ouro 18k\nGarantia: 1 ano no banho'}
+                  className="w-full bg-[#F4F5F7] border border-gray-200 rounded-lg p-2.5 focus:border-[#E97527] focus:outline-none"
+                />
+              </div>
+
+              {/* Variations */}
+              <div className="p-4 bg-[#F8F9FA] rounded-xl border border-gray-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">
+                    Tamanhos / Variações (aro, comprimento...)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormVariations((v) => [...v, { id: `v-${Date.now()}-${v.length}`, name: '', stock: 0 }])
+                    }
+                    className="text-[11px] font-semibold text-[#E97527] hover:underline flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" /> Adicionar tamanho
+                  </button>
+                </div>
+                {formVariations.length === 0 && (
+                  <p className="text-[11px] text-gray-500">
+                    Sem variações: a peça é vendida em tamanho único. Adicione se ela tiver aros ou comprimentos diferentes.
+                  </p>
+                )}
+                {formVariations.map((v, idx) => (
+                  <div key={v.id} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={v.name}
+                      onChange={(e) =>
+                        setFormVariations((list) => list.map((x, i) => (i === idx ? { ...x, name: e.target.value } : x)))
+                      }
+                      placeholder="Ex: Aro 16"
+                      className="flex-1 bg-white border border-gray-300 rounded p-2 focus:border-[#E97527] focus:outline-none"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      value={v.stock}
+                      onChange={(e) =>
+                        setFormVariations((list) =>
+                          list.map((x, i) => (i === idx ? { ...x, stock: Number(e.target.value) } : x))
+                        )
+                      }
+                      className="w-20 bg-white border border-gray-300 rounded p-2 focus:border-[#E97527] focus:outline-none"
+                      title="Estoque deste tamanho"
+                    />
+                    <span className="text-[10px] text-gray-500">un.</span>
+                    <button
+                      type="button"
+                      onClick={() => setFormVariations((list) => list.filter((_, i) => i !== idx))}
+                      className="p-1.5 text-gray-400 hover:text-red-600"
+                      title="Remover tamanho"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Visibility */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Visível na loja', value: formActive, set: setFormActive },
+                  { label: 'Destaque na Home', value: formFeatured, set: setFormFeatured },
+                  { label: 'Mais vendida', value: formBestSeller, set: setFormBestSeller },
+                  { label: 'Lançamento', value: formIsNew, set: setFormIsNew },
+                ].map((t) => (
+                  <label
+                    key={t.label}
+                    className="flex items-center gap-2 bg-[#F4F5F7] border border-gray-200 rounded-lg px-3 py-2.5 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={t.value}
+                      onChange={(e) => t.set(e.target.checked)}
+                      className="accent-[#E97527] w-4 h-4"
+                    />
+                    <span className="font-semibold text-gray-700">{t.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              {formError && (
+                <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{formError}</span>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
                 <button
                   type="button"
+                  disabled={saving}
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
                 >
@@ -570,9 +705,11 @@ export const AdminProducts: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-[#E97527] hover:bg-[#D5651B] text-white font-bold uppercase tracking-wider rounded-lg transition"
+                  disabled={saving}
+                  className="px-6 py-2 bg-[#E97527] hover:bg-[#D5651B] disabled:opacity-60 text-white font-bold uppercase tracking-wider rounded-lg transition flex items-center gap-2"
                 >
-                  Salvar Produto
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {saving ? 'Salvando...' : 'Salvar Produto'}
                 </button>
               </div>
             </form>

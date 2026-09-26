@@ -11,10 +11,13 @@ import {
   MessageCircle,
   Image as ImageIcon,
   Calendar,
-  X
+  X,
+  Loader2,
+  AlertTriangle
 } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
-import { Coupon } from '../../types';
+import { Coupon, HomeBanner } from '../../types';
+import { ImageUploader } from './ImageUploader';
 
 export const AdminMarketing: React.FC = () => {
   const { coupons, addCoupon, deleteCoupon, homeBanners, updateHomeBanners } = useCitrinoStore();
@@ -36,8 +39,29 @@ export const AdminMarketing: React.FC = () => {
   const [campaignSuccess, setCampaignSuccess] = useState<string | null>(null);
 
   // Home Banners state
-  const [bannersList, setBannersList] = useState(homeBanners);
+  const [bannersList, setBannersList] = useState<HomeBanner[]>(() => homeBanners.map((b) => ({ ...b })));
   const [bannerSaveFeedback, setBannerSaveFeedback] = useState<boolean>(false);
+  const [bannerSaving, setBannerSaving] = useState<boolean>(false);
+  const [bannerError, setBannerError] = useState<string | null>(null);
+
+  const patchBanner = (idx: number, patch: Partial<HomeBanner>) =>
+    setBannersList((list) => list.map((b, i) => (i === idx ? { ...b, ...patch } : b)));
+
+  const addBanner = () =>
+    setBannersList((list) => [
+      ...list,
+      {
+        id: `ban-${Date.now()}`,
+        title: '',
+        subtitle: '',
+        ctaText: 'Explorar Catálogo',
+        ctaLink: '/catalogo',
+        image: '',
+        tag: 'NOVIDADE',
+        active: true,
+        order: list.length + 1,
+      },
+    ]);
 
   const handleCreateCoupon = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,10 +92,27 @@ export const AdminMarketing: React.FC = () => {
     }, 1200);
   };
 
-  const handleSaveBanners = () => {
-    updateHomeBanners(bannersList);
-    setBannerSaveFeedback(true);
-    setTimeout(() => setBannerSaveFeedback(false), 3000);
+  const handleSaveBanners = async () => {
+    setBannerError(null);
+    const bad = bannersList.findIndex((b) => !b.image || !b.title.trim());
+    if (bad >= 0) {
+      setBannerError(`O banner #${bad + 1} precisa de título e de uma foto de fundo.`);
+      return;
+    }
+    setBannerSaving(true);
+    try {
+      const res = await updateHomeBanners(bannersList);
+      if (res.ok === true) {
+        setBannerSaveFeedback(true);
+        setTimeout(() => setBannerSaveFeedback(false), 3000);
+      } else {
+        setBannerError((res as { error: string }).error);
+      }
+    } catch (err: any) {
+      setBannerError(err?.message || 'Não foi possível salvar agora.');
+    } finally {
+      setBannerSaving(false);
+    }
   };
 
   return (
@@ -292,10 +333,10 @@ export const AdminMarketing: React.FC = () => {
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-6 shadow-xs max-w-3xl">
           <div className="space-y-1">
             <h3 className="text-base font-bold text-gray-900">
-              Gestão dos Banners Rotativos da Home
+              Banners do topo da Home
             </h3>
             <p className="text-xs text-gray-500">
-              Edite títulos, fotos e chamadas para ação que aparecem no topo da loja virtual.
+              Foto de fundo, chamada e texto do botão. Com mais de um banner ativo, a loja alterna entre eles automaticamente.
             </p>
           </div>
 
@@ -306,72 +347,120 @@ export const AdminMarketing: React.FC = () => {
                   <span className="font-bold text-gray-800 uppercase text-[11px]">
                     Banner #{idx + 1}
                   </span>
-                  <img
-                    src={banner.image}
-                    alt={banner.title}
-                    className="w-16 h-10 rounded object-cover border"
-                  />
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-1.5 cursor-pointer font-semibold text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={banner.active}
+                        onChange={(e) => patchBanner(idx, { active: e.target.checked })}
+                        className="accent-[#E97527] w-4 h-4"
+                      />
+                      Ativo
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Remover este banner?')) {
+                          setBannersList((list) => list.filter((_, i) => i !== idx));
+                        }
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition"
+                      title="Remover banner"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
+
+                <ImageUploader
+                  label="Foto de fundo (fica melhor deitada, ex.: 1600 x 700)"
+                  value={banner.image ? [banner.image] : []}
+                  onChange={(urls) => patchBanner(idx, { image: urls[0] || '' })}
+                  folder="banners"
+                  max={1}
+                  maxSide={2000}
+                />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="font-semibold text-gray-700">Subtítulo / Eyebrow</label>
+                    <label className="font-semibold text-gray-700">Etiqueta (ex.: NOVA COLEÇÃO)</label>
                     <input
                       type="text"
-                      value={banner.subtitle}
-                      onChange={(e) => {
-                        const copy = [...bannersList];
-                        copy[idx].subtitle = e.target.value;
-                        setBannersList(copy);
-                      }}
+                      value={banner.tag}
+                      onChange={(e) => patchBanner(idx, { tag: e.target.value })}
                       className="w-full bg-white border border-gray-300 rounded p-2 focus:outline-none focus:border-[#E97527]"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="font-semibold text-gray-700">Título Principal</label>
+                    <label className="font-semibold text-gray-700">Título principal</label>
                     <input
                       type="text"
                       value={banner.title}
-                      onChange={(e) => {
-                        const copy = [...bannersList];
-                        copy[idx].title = e.target.value;
-                        setBannersList(copy);
-                      }}
+                      onChange={(e) => patchBanner(idx, { title: e.target.value })}
                       className="w-full bg-white border border-gray-300 rounded p-2 focus:outline-none focus:border-[#E97527]"
                     />
                   </div>
 
                   <div className="space-y-1 sm:col-span-2">
-                    <label className="font-semibold text-gray-700">URL da Imagem de Fundo</label>
+                    <label className="font-semibold text-gray-700">Texto de apoio</label>
+                    <textarea
+                      rows={2}
+                      value={banner.subtitle}
+                      onChange={(e) => patchBanner(idx, { subtitle: e.target.value })}
+                      className="w-full bg-white border border-gray-300 rounded p-2 focus:outline-none focus:border-[#E97527]"
+                    />
+                  </div>
+
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="font-semibold text-gray-700">Texto do botão</label>
                     <input
                       type="text"
-                      value={banner.image}
-                      onChange={(e) => {
-                        const copy = [...bannersList];
-                        copy[idx].image = e.target.value;
-                        setBannersList(copy);
-                      }}
+                      value={banner.ctaText}
+                      onChange={(e) => patchBanner(idx, { ctaText: e.target.value })}
                       className="w-full bg-white border border-gray-300 rounded p-2 focus:outline-none focus:border-[#E97527]"
                     />
                   </div>
                 </div>
               </div>
             ))}
+
+            {bannersList.length === 0 && (
+              <p className="text-xs text-gray-500">
+                Nenhum banner. A loja mostra um banner padrão até você criar o primeiro.
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={addBanner}
+              className="text-xs font-semibold text-[#E97527] hover:underline flex items-center gap-1"
+            >
+              <Plus className="w-3.5 h-3.5" /> Adicionar banner
+            </button>
           </div>
+
+          {bannerError && (
+            <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{bannerError}</span>
+            </div>
+          )}
 
           {bannerSaveFeedback && (
             <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
-              ✓ Banners da Home salvos com sucesso e atualizados na loja virtual!
+              ✓ Banners salvos! Já aparecem na loja.
             </p>
           )}
 
           <div className="pt-2">
             <button
               onClick={handleSaveBanners}
-              className="bg-[#E97527] hover:bg-[#D5651B] text-white text-xs font-bold uppercase tracking-wider px-6 py-2.5 rounded-lg transition"
+              disabled={bannerSaving}
+              className="bg-[#E97527] hover:bg-[#D5651B] disabled:opacity-60 text-white text-xs font-bold uppercase tracking-wider px-6 py-2.5 rounded-lg transition flex items-center gap-2"
             >
-              Salvar Alterações nos Banners
+              {bannerSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {bannerSaving ? 'Salvando...' : 'Salvar Alterações nos Banners'}
             </button>
           </div>
         </div>

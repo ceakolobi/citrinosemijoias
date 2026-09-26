@@ -12,6 +12,7 @@ import {
   Gem
 } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
+import { useSiteText, RichText } from '../../services/siteText';
 
 interface AboutContactViewProps {
   initialSection?: string;
@@ -23,6 +24,9 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
   onNavigateCatalog,
 }) => {
   const { companySettings } = useCitrinoStore();
+  const t = useSiteText();
+  const waDigits = companySettings.whatsapp.replace(/\D/g, '');
+  const waNumber = waDigits.startsWith('55') && waDigits.length >= 12 ? waDigits : `55${waDigits}`;
   const [sentMessage, setSentMessage] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -45,16 +49,16 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         <div className="lg:col-span-6 space-y-6">
           <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#C9A84C]">
-            Sobre a Citrino Semijoias
+            {t('about.hero.eyebrow')}
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif-luxury text-[#1C1C1C] leading-tight">
-            Nascida da Paixão pelo Ouro e pela Joalheria Fina
+            {t('about.hero.title')}
           </h1>
           <p className="text-xs sm:text-sm text-[#555] leading-relaxed">
-            A <strong>Citrino Semijoias</strong> nasceu com o propósito de democratizar o luxo e a sofisticação da alta joalheria. Inspirada no brilho solar do citrino — pedra que simboliza prosperidade, energia e elegância atemporal —, nossa marca desenvolve coleções contemporâneas com padrão joalheiro de acabamento.
+            <RichText text={t('about.hero.p1')} />
           </p>
           <p className="text-xs sm:text-sm text-[#555] leading-relaxed">
-            Produzidas no renomado polo de Limeira (São Paulo), nossas peças recebem até 10 milésimos de ouro 18k, camada de ródio nobre e selamento com verniz nanotecnológico Diamond. O resultado são semijoias com o mesmo peso visual, brilho e textura do ouro maciço, 100% livres de níquel e hipoalergênicas.
+            <RichText text={t('about.hero.p2')} />
           </p>
 
           <div className="pt-2 flex flex-wrap gap-4">
@@ -62,15 +66,15 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
               onClick={onNavigateCatalog}
               className="bg-[#C9A84C] hover:bg-[#B5943B] text-white text-xs font-bold uppercase tracking-widest px-6 py-3.5 rounded-lg transition"
             >
-              Conhecer Nossas Joias
+              {t('about.hero.cta1')}
             </button>
             <a
-              href={`https://wa.me/5511987654321?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20as%20pe%C3%A7as%20da%20Citrino.`}
+              href={`https://wa.me/${waNumber}?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20as%20pe%C3%A7as%20da%20Citrino.`}
               target="_blank"
               rel="noreferrer"
               className="border border-[#1C1C1C] hover:bg-[#1C1C1C] hover:text-white text-[#1C1C1C] text-xs font-bold uppercase tracking-widest px-6 py-3.5 rounded-lg transition flex items-center gap-2"
             >
-              <Phone className="w-3.5 h-3.5" /> Falar no WhatsApp
+              <Phone className="w-3.5 h-3.5" /> {t('about.hero.cta2')}
             </a>
           </div>
         </div>
@@ -86,14 +90,14 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
               />
             </div>
             <span className="text-[10px] tracking-[0.2em] font-bold text-[#C9A84C] uppercase">
-              Marca Registrada
+              {t('about.brandcard.tag')}
             </span>
             <span className="text-xs font-serif-luxury text-[#1C1C1C] font-semibold mt-0.5">
-              Citrino Semijoias Finas
+              {t('about.brandcard.name')}
             </span>
           </div>
           <img
-            src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=800&auto=format&fit=crop"
+            src={t('about.hero.image')}
             alt="Colares Riviera Citrino"
             className="w-full h-72 sm:h-80 object-cover rounded-xl shadow-md"
           />
@@ -104,10 +108,10 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
       <section className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-12">
         <div className="text-center max-w-xl mx-auto mb-10">
           <span className="text-xs font-bold uppercase tracking-widest text-[#C9A84C]">
-            O Padrão Citrino
+            {t('about.pillars.eyebrow')}
           </span>
           <h2 className="text-2xl sm:text-3xl font-serif-luxury text-[#1C1C1C] mt-1">
-            4 Pilares de Excelência
+            {t('about.pillars.title')}
           </h2>
         </div>
 
@@ -116,9 +120,9 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
             <div className="w-10 h-10 rounded-full bg-[#1C1C1C] text-[#C9A84C] flex items-center justify-center">
               <Sparkles className="w-5 h-5" />
             </div>
-            <h3 className="font-serif-luxury text-base font-semibold text-[#1C1C1C]">Banho 10 Milésimos</h3>
+            <h3 className="font-serif-luxury text-base font-semibold text-[#1C1C1C]">{t('about.pillar1.title')}</h3>
             <p className="text-xs text-[#666] leading-relaxed">
-              Ouro 18k legítimo aplicado em múltiplas camadas térmicas para resistência real ao uso cotidiano.
+              {t('about.pillar1.text')}
             </p>
           </div>
 
@@ -126,9 +130,9 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
             <div className="w-10 h-10 rounded-full bg-[#1C1C1C] text-[#C9A84C] flex items-center justify-center">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <h3 className="font-serif-luxury text-base font-semibold text-[#1C1C1C]">100% Antialérgico</h3>
+            <h3 className="font-serif-luxury text-base font-semibold text-[#1C1C1C]">{t('about.pillar2.title')}</h3>
             <p className="text-xs text-[#666] leading-relaxed">
-              Processo produtivo sem adição de níquel ou cádmio, testado para peles extremamente sensíveis.
+              {t('about.pillar2.text')}
             </p>
           </div>
 
@@ -136,9 +140,9 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
             <div className="w-10 h-10 rounded-full bg-[#1C1C1C] text-[#C9A84C] flex items-center justify-center">
               <Gem className="w-5 h-5" />
             </div>
-            <h3 className="font-serif-luxury text-base font-semibold text-[#1C1C1C]">Pedrarias 5A</h3>
+            <h3 className="font-serif-luxury text-base font-semibold text-[#1C1C1C]">{t('about.pillar3.title')}</h3>
             <p className="text-xs text-[#666] leading-relaxed">
-              Zircônias cúbicas em lapidação brilhante e pedras fusion com transparência e refração de diamante.
+              {t('about.pillar3.text')}
             </p>
           </div>
 
@@ -146,9 +150,9 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
             <div className="w-10 h-10 rounded-full bg-[#1C1C1C] text-[#C9A84C] flex items-center justify-center">
               <HelpCircle className="w-5 h-5" />
             </div>
-            <h3 className="font-serif-luxury text-base font-semibold text-[#1C1C1C]">Garantia 1 Ano</h3>
+            <h3 className="font-serif-luxury text-base font-semibold text-[#1C1C1C]">{t('about.pillar4.title')}</h3>
             <p className="text-xs text-[#666] leading-relaxed">
-              Certificado oficial assinado com cobertura total sobre o banho de ouro e assistência ágil.
+              {t('about.pillar4.text')}
             </p>
           </div>
         </div>
@@ -158,32 +162,15 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
       <section className="max-w-3xl mx-auto space-y-6">
         <div className="text-center space-y-2">
           <span className="text-xs font-bold uppercase tracking-widest text-[#C9A84C]">
-            Dúvidas Frequentes
+            {t('about.faq.eyebrow')}
           </span>
           <h2 className="text-2xl sm:text-3xl font-serif-luxury text-[#1C1C1C]">
-            Perguntas & Respostas
+            {t('about.faq.title')}
           </h2>
         </div>
 
         <div className="space-y-3">
-          {[
-            {
-              q: 'As semijoias da Citrino escurecem com o tempo?',
-              a: 'Nossas semijoias contam com 10 milésimos de ouro 18k e banho protetor Diamond, o que impede a oxidação prematura. Seguindo as recomendações simples de cuidados (evitar perfumes diretos e produtos químicos), suas peças mantêm o brilho original por anos.',
-            },
-            {
-              q: 'Qual é o prazo de envio e de entrega?',
-              a: 'Após a aprovação do pagamento, seu pedido é cuidadosamente embalado no nosso estojo de veludo e postado em até 24 horas úteis. O prazo dos Correios varia de 2 a 5 dias úteis para a maior parte do Brasil.',
-            },
-            {
-              q: 'Como funciona a garantia de 1 ano?',
-              a: 'Todas as peças acompanham um certificado nominal. Caso ocorra desprendimento do banho ou defeito de fabricação no período de 12 meses, você tem direito ao rebanho gratuito ou substituição da semijoia.',
-            },
-            {
-              q: 'Posso comprar no atacado para revenda?',
-              a: 'Sim! Temos condições exclusivas para revendedoras com descontos de até 35%, faturamento facilitado para CNPJ e kit completo de mostruário e embalagens.',
-            },
-          ].map((item, idx) => (
+          {[1, 2, 3, 4].map((n) => ({ q: t(`about.faq${n}.q`), a: t(`about.faq${n}.a`) })).map((item, idx) => (
             <details
               key={idx}
               className="group bg-white p-5 rounded-xl border border-[#E8E4DC] [&_summary::-webkit-details-marker]:hidden"
@@ -206,13 +193,13 @@ export const AboutContactView: React.FC<AboutContactViewProps> = ({
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-10 bg-white p-8 sm:p-12 rounded-2xl border border-[#E8E4DC]">
         <div className="lg:col-span-5 space-y-6">
           <span className="text-xs font-bold uppercase tracking-widest text-[#C9A84C]">
-            Fale Conosco
+            {t('about.contact.eyebrow')}
           </span>
           <h2 className="text-2xl sm:text-3xl font-serif-luxury text-[#1C1C1C]">
-            Atendimento Exclusivo
+            {t('about.contact.title')}
           </h2>
           <p className="text-xs text-[#666] leading-relaxed">
-            Nossa equipe de consultoras está pronta para te atender de segunda a sexta, das 09h às 18h.
+            {t('about.contact.intro')}
           </p>
 
           <div className="space-y-4 text-xs text-[#444]">

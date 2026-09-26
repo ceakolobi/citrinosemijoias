@@ -12,7 +12,7 @@ import {
 import { useCitrinoStore } from '../../services/store';
 
 export const AdminReports: React.FC = () => {
-  const { products, orders, customers } = useCitrinoStore();
+  const { allProducts: products, orders, customers } = useCitrinoStore();
   const [downloadFeedback, setDownloadFeedback] = useState<string | null>(null);
 
   // Revenue by Category

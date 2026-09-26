@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Product,
   Category,
@@ -17,34 +17,35 @@ import {
   ReturnExchange
 } from '../types';
 import {
-  INITIAL_PRODUCTS,
-  INITIAL_CATEGORIES,
   INITIAL_COLLECTIONS,
   INITIAL_CUSTOMERS,
   INITIAL_ORDERS,
   INITIAL_RECEIVABLES,
   INITIAL_PAYABLES,
   INITIAL_COUPONS,
-  INITIAL_BANNERS,
-  INITIAL_ADMIN_USERS,
 } from '../data/mockData';
+import {
+  useRemote,
+  Result,
+  saveProductDoc,
+  deleteProductDoc,
+  saveBannersDoc,
+  saveContentDoc,
+  loginAdmin as remoteLogin,
+  logoutAdmin as remoteLogout,
+} from './remote';
 
 const STORAGE_KEYS = {
-  PRODUCTS: 'citrino_products_v1',
-  CATEGORIES: 'citrino_categories_v1',
   COLLECTIONS: 'citrino_collections_v1',
   CUSTOMERS: 'citrino_customers_v1',
   ORDERS: 'citrino_orders_v1',
   RECEIVABLES: 'citrino_receivables_v1',
   PAYABLES: 'citrino_payables_v1',
   COUPONS: 'citrino_coupons_v1',
-  BANNERS: 'citrino_banners_v1',
-  ADMIN_USERS: 'citrino_admin_users_v3',  // bumped to v3 to add Mariah admin user
   CART: 'citrino_cart_v1',
   WISHLIST: 'citrino_wishlist_v1',
   CURRENT_USER: 'citrino_current_user_v1',
   ACTIVE_ROLE: 'citrino_active_role_v1',
-  ADMIN_SESSION: 'citrino_admin_session_v1',
 };
 
 function getLocal<T>(key: string, fallback: T): T {
@@ -104,32 +105,23 @@ const DEFAULT_COMPANY_SETTINGS: CompanySettings = {
 
 export function useCitrinoStore() {
   // State
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = getLocal<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-    if (!Array.isArray(saved) || saved.length === 0) return INITIAL_PRODUCTS;
-    const existingIds = new Set(saved.map((p) => p.id));
-    const missing = INITIAL_PRODUCTS.filter((p) => !existingIds.has(p.id));
-    // Sanitize any broken images cached in user's localStorage
-    const sanitized = saved.map((p) => {
-      const initial = INITIAL_PRODUCTS.find((ip) => ip.id === p.id);
-      if (initial && (p.images.some((img) => img.includes('photo-1611591475824-7494f1c93a02') || !img))) {
-        return { ...p, images: initial.images };
-      }
-      return p;
-    });
-    return missing.length > 0 ? [...sanitized, ...missing] : sanitized;
-  });
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const saved = getLocal<Category[]>(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
-    if (!Array.isArray(saved) || saved.length === 0) return INITIAL_CATEGORIES;
-    return saved.map((cat) => {
-      const initial = INITIAL_CATEGORIES.find((ic) => ic.id === cat.id);
-      if (initial && (cat.image.includes('photo-1611591475824-7494f1c93a02') || !cat.image)) {
-        return { ...cat, image: initial.image };
-      }
-      return cat;
-    });
-  });
+  // Catálogo, banners, textos, contato da loja e sessão do painel vêm do Supabase (store compartilhado).
+  const remote = useRemote();
+  // Loja pública só enxerga produtos ativos; o painel usa allProducts (inclui inativos e preço de custo).
+  const allProducts = remote.products;
+  const products = useMemo(
+    () => remote.products.filter((p) => p.active !== false),
+    [remote.products]
+  );
+  const banners = remote.banners;
+  const categories = useMemo<Category[]>(
+    () =>
+      remote.categories.map((c) => ({
+        ...c,
+        itemCount: remote.products.filter((p) => p.active !== false && p.category === c.name).length,
+      })),
+    [remote.categories, remote.products]
+  );
   const [collections] = useState<Collection[]>(() => getLocal(STORAGE_KEYS.COLLECTIONS, INITIAL_COLLECTIONS));
   const [customers, setCustomers] = useState<Customer[]>(() => getLocal(STORAGE_KEYS.CUSTOMERS, INITIAL_CUSTOMERS));
   const [orders, setOrders] = useState<Order[]>(() => {
@@ -151,46 +143,45 @@ export function useCitrinoStore() {
   const [receivables, setReceivables] = useState<Receivable[]>(() => getLocal(STORAGE_KEYS.RECEIVABLES, INITIAL_RECEIVABLES));
   const [payables, setPayables] = useState<Payable[]>(() => getLocal(STORAGE_KEYS.PAYABLES, INITIAL_PAYABLES));
   const [coupons, setCoupons] = useState<Coupon[]>(() => getLocal(STORAGE_KEYS.COUPONS, INITIAL_COUPONS));
-  const [banners, setBanners] = useState<HomeBanner[]>(() => getLocal(STORAGE_KEYS.BANNERS, INITIAL_BANNERS));
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(() => getLocal(STORAGE_KEYS.ADMIN_USERS, INITIAL_ADMIN_USERS));
-  const [companySettings, setCompanySettings] = useState<CompanySettings>(() => getLocal('citrino_settings_v2', DEFAULT_COMPANY_SETTINGS));
+  const companySettings = useMemo<CompanySettings>(
+    () => ({ ...DEFAULT_COMPANY_SETTINGS, ...remote.company }),
+    [remote.company]
+  );
 
   // E-commerce interactive state
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = getLocal<CartItem[]>(STORAGE_KEYS.CART, []);
-    return saved.map((item) => {
-      if (item.product?.images?.some((img) => img.includes('photo-1611591475824-7494f1c93a02'))) {
-        const fixed = INITIAL_PRODUCTS.find((p) => p.id === item.product.id) || item.product;
-        return { ...item, product: fixed };
-      }
-      return item;
-    });
-  });
-  const [wishlist, setWishlist] = useState<string[]>(() => getLocal(STORAGE_KEYS.WISHLIST, ['prod-1', 'prod-2']));
+  const [cart, setCart] = useState<CartItem[]>(() => getLocal<CartItem[]>(STORAGE_KEYS.CART, []));
+  const [wishlist, setWishlist] = useState<string[]>(() => getLocal(STORAGE_KEYS.WISHLIST, [] as string[]));
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null);
   
   // Auth state
   const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(() => getLocal(STORAGE_KEYS.CURRENT_USER, INITIAL_CUSTOMERS[0]));
   const [activeAdminRole, setActiveAdminRole] = useState<AdminRole>(() => getLocal(STORAGE_KEYS.ACTIVE_ROLE, 'admin'));
-  const [adminSession, setAdminSession] = useState<AdminUser | null>(() => getLocal(STORAGE_KEYS.ADMIN_SESSION, null));
+  const adminSession = useMemo<AdminUser | null>(
+    () =>
+      remote.session.user
+        ? {
+            id: remote.session.user.id,
+            name: remote.session.user.name,
+            email: remote.session.user.email,
+            role: remote.session.user.role,
+            active: true,
+            lastLogin: '',
+          }
+        : null,
+    [remote.session.user]
+  );
 
   // Save to localStorage when state changes
-  useEffect(() => { setLocal(STORAGE_KEYS.PRODUCTS, products); }, [products]);
-  useEffect(() => { setLocal(STORAGE_KEYS.CATEGORIES, categories); }, [categories]);
   useEffect(() => { setLocal(STORAGE_KEYS.CUSTOMERS, customers); }, [customers]);
   useEffect(() => { setLocal(STORAGE_KEYS.ORDERS, orders); }, [orders]);
   useEffect(() => { setLocal(STORAGE_KEYS.RECEIVABLES, receivables); }, [receivables]);
   useEffect(() => { setLocal(STORAGE_KEYS.PAYABLES, payables); }, [payables]);
   useEffect(() => { setLocal(STORAGE_KEYS.COUPONS, coupons); }, [coupons]);
-  useEffect(() => { setLocal(STORAGE_KEYS.BANNERS, banners); }, [banners]);
-  useEffect(() => { setLocal(STORAGE_KEYS.ADMIN_USERS, adminUsers); }, [adminUsers]);
   useEffect(() => { setLocal(STORAGE_KEYS.CART, cart); }, [cart]);
   useEffect(() => { setLocal(STORAGE_KEYS.WISHLIST, wishlist); }, [wishlist]);
   useEffect(() => { setLocal(STORAGE_KEYS.CURRENT_USER, currentCustomer); }, [currentCustomer]);
   useEffect(() => { setLocal(STORAGE_KEYS.ACTIVE_ROLE, activeAdminRole); }, [activeAdminRole]);
-  useEffect(() => { setLocal('citrino_settings_v2', companySettings); }, [companySettings]);
-  useEffect(() => { setLocal(STORAGE_KEYS.ADMIN_SESSION, adminSession); }, [adminSession]);
 
   // Cart actions
   const addToCart = (
@@ -440,22 +431,10 @@ export function useCitrinoStore() {
     );
   };
 
-  // Product CRUD
-  const saveProduct = (product: Product) => {
-    setProducts((prev) => {
-      const idx = prev.findIndex((p) => p.id === product.id);
-      if (idx > -1) {
-        const next = [...prev];
-        next[idx] = product;
-        return next;
-      }
-      return [product, ...prev];
-    });
-  };
+  // Product CRUD (grava no Supabase; só admin/operador passam pelo RLS)
+  const saveProduct = (product: Product): Promise<Result> => saveProductDoc(product);
 
-  const deleteProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-  };
+  const deleteProduct = (id: string): Promise<Result> => deleteProductDoc(id);
 
   // Customer CRUD
   const saveCustomer = (customer: Customer) => {
@@ -505,18 +484,13 @@ export function useCitrinoStore() {
     setCoupons((prev) => prev.filter((c) => c.id !== id));
   };
 
-  const addProduct = (p: Omit<Product, 'id'>) => {
-    const newProduct: Product = {
-      ...p,
-      id: `prod-${Date.now()}`,
-    };
-    setProducts((prev) => [newProduct, ...prev]);
-  };
+  const addProduct = (p: Omit<Product, 'id'>): Promise<Result> =>
+    saveProductDoc({ ...p, id: `prod-${Date.now()}` });
 
-  const updateProduct = (id: string, partial: Partial<Product>) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, ...partial } : p))
-    );
+  const updateProduct = (id: string, partial: Partial<Product>): Promise<Result> => {
+    const current = allProducts.find((x) => x.id === id);
+    if (!current) return Promise.resolve({ ok: false, error: 'Produto não encontrado.' } as Result);
+    return saveProductDoc({ ...current, ...partial, id });
   };
 
   const addCustomer = (c: any) => {
@@ -565,13 +539,19 @@ export function useCitrinoStore() {
     setCoupons((prev) => [newCoupon, ...prev]);
   };
 
-  const updateCompanySettings = (partial: Partial<CompanySettings>) => {
-    setCompanySettings((prev) => ({ ...prev, ...partial }));
+  // Só dados públicos de contato vão pro banco; chaves de pagamento nunca.
+  const PUBLIC_COMPANY_KEYS: (keyof CompanySettings)[] = [
+    'name', 'tradingName', 'cnpj', 'stateRegistration', 'phone', 'whatsapp', 'email',
+    'address', 'city', 'state', 'cep', 'instagram', 'freeShippingThreshold',
+  ];
+  const updateCompanySettings = (partial: Partial<CompanySettings>): Promise<Result> => {
+    const merged: Record<string, any> = { ...companySettings, ...partial };
+    const pub: Record<string, any> = {};
+    PUBLIC_COMPANY_KEYS.forEach((k) => { pub[k] = merged[k]; });
+    return saveContentDoc('company', pub);
   };
 
-  const updateHomeBanners = (newBanners: any[]) => {
-    setBanners(newBanners);
-  };
+  const updateHomeBanners = (newBanners: HomeBanner[]): Promise<Result> => saveBannersDoc(newBanners);
 
   // Unified financial entries
   const financialEntries = [
@@ -625,64 +605,32 @@ export function useCitrinoStore() {
     }
   };
 
-  // Admin auth functions
-  const loginAdmin = (email: string, password: string): boolean => {
-    const user = adminUsers.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password && u.active
-    );
-    if (user) {
-      const sessionUser = { ...user };
-      sessionUser.lastLogin = new Date().toISOString().replace('T', ' ').substring(0, 16);
-      // Write to localStorage synchronously so AdminLayout reads the correct session on mount
-      setLocal(STORAGE_KEYS.ADMIN_SESSION, sessionUser);
-      setAdminSession(sessionUser);
-      setAdminUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, lastLogin: sessionUser.lastLogin } : u))
-      );
-      return true;
-    }
-    return false;
+  // Login do painel: Supabase Auth + checagem em citrino_admins (ver remote.ts)
+  const loginAdmin = (email: string, password: string): Promise<Result> => remoteLogin(email, password);
+  const logoutAdmin = (): Promise<void> => remoteLogout();
+
+  const currentAdminUser = {
+    id: adminSession?.id || 'anon',
+    name: adminSession?.name || 'Visitante',
+    email: adminSession?.email || '',
+    role: (adminSession?.role || 'operador') as string,
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
   };
 
-  const logoutAdmin = () => {
-    setLocal(STORAGE_KEYS.ADMIN_SESSION, null);
-    setAdminSession(null);
-  };
-
-  const currentAdminUser = adminSession
-    ? {
-        id: adminSession.id,
-        name: adminSession.name,
-        email: adminSession.email,
-        role: adminSession.role as string,
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-      }
-    : {
-        id: adminUsers[0]?.id || 'u1',
-        name: adminUsers[0]?.name || 'Admin',
-        email: adminUsers[0]?.email || 'admin@citrinosemijoias.com.br',
-        role: adminUsers[0]?.role || 'admin',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-      };
-
-  // Reset demo data helper
+  // Reset dos dados de demonstração que ainda são locais (pedidos, clientes, financeiro)
   const resetToInitialData = () => {
-    setProducts(INITIAL_PRODUCTS);
-    setCategories(INITIAL_CATEGORIES);
     setCustomers(INITIAL_CUSTOMERS);
     setOrders(INITIAL_ORDERS);
     setReceivables(INITIAL_RECEIVABLES);
     setPayables(INITIAL_PAYABLES);
     setCoupons(INITIAL_COUPONS);
-    setBanners(INITIAL_BANNERS);
-    setAdminUsers(INITIAL_ADMIN_USERS);
-    setCompanySettings(DEFAULT_COMPANY_SETTINGS);
     setCart([]);
   };
 
   return {
     // Data
     products,
+    allProducts,
     categories,
     collections,
     customers,
@@ -692,7 +640,6 @@ export function useCitrinoStore() {
     coupons,
     banners,
     homeBanners: banners,
-    adminUsers,
     companySettings,
     cart,
     wishlist,
@@ -737,9 +684,12 @@ export function useCitrinoStore() {
     updateHomeBanners,
     setCurrentCustomer,
     setActiveAdminRole,
-    setCompanySettings,
     resetToInitialData,
     adminSession,
+    adminSessionStatus: remote.session.status,
+    catalogStatus: remote.status,
+    catalogHasData: remote.hasData,
+    catalogError: remote.error,
     loginAdmin,
     logoutAdmin,
   };

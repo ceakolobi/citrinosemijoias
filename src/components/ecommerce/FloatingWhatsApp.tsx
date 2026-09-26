@@ -1,9 +1,11 @@
 import React from 'react';
 import { MessageCircle } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
+import { useSiteText } from '../../services/siteText';
 
 export const FloatingWhatsApp: React.FC = () => {
   const { companySettings } = useCitrinoStore();
+  const t = useSiteText();
   const phoneClean = companySettings.whatsapp.replace(/\D/g, '');
 
   return (
@@ -11,7 +13,7 @@ export const FloatingWhatsApp: React.FC = () => {
       {/* Floating Tooltip bubble */}
       <div className="mr-3 hidden sm:flex items-center bg-white border border-[#E8E4DC] text-[#1C1C1C] px-3.5 py-2 rounded-full shadow-lg text-xs font-medium opacity-90 group-hover:opacity-100 transition animate-bounce">
         <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 inline-block" />
-        Dúvidas? Fale com a Consultora
+        {t('whatsapp.tooltip')}
       </div>
 
       {/* WhatsApp Action Button */}

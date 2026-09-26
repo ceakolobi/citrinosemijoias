@@ -177,12 +177,16 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
               <span className="text-xs font-bold uppercase tracking-widest text-[#C9A84C]">
                 {product.category}
               </span>
-              <span className="text-gray-300">•</span>
-              <div className="flex items-center gap-1 text-[#C9A84C] text-xs">
-                <Star className="w-3.5 h-3.5 fill-[#C9A84C]" />
-                <span className="font-bold text-[#1C1C1C]">{product.rating}</span>
-                <span className="text-[#888]">({product.reviewCount} avaliações)</span>
-              </div>
+              {product.reviewCount > 0 && (
+                <>
+                  <span className="text-gray-300">•</span>
+                  <div className="flex items-center gap-1 text-[#C9A84C] text-xs">
+                    <Star className="w-3.5 h-3.5 fill-[#C9A84C]" />
+                    <span className="font-bold text-[#1C1C1C]">{product.rating}</span>
+                    <span className="text-[#888]">({product.reviewCount} avaliações)</span>
+                  </div>
+                </>
+              )}
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-serif-luxury text-[#1C1C1C] font-normal leading-tight">

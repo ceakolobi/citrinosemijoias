@@ -215,7 +215,6 @@ export interface AdminUser {
   role: AdminRole;
   active: boolean;
   lastLogin: string;
-  password?: string;
 }
 
 export interface ReturnExchange {

@@ -30,12 +30,49 @@ import { AdminFinancial } from './components/admin/AdminFinancial';
 import { AdminMarketing } from './components/admin/AdminMarketing';
 import { AdminReports } from './components/admin/AdminReports';
 import { AdminSettings } from './components/admin/AdminSettings';
+import { AdminContent } from './components/admin/AdminContent';
+
+function SplashScreen({
+  message,
+  action,
+}: {
+  message: string;
+  action?: { label: string; onClick: () => void };
+}) {
+  return (
+    <div className="min-h-screen bg-[#FAF8F4] flex flex-col items-center justify-center gap-5 p-6 text-center">
+      <img src="/citrino-logo.jpg" alt="Citrino Semijoias" className="w-24 h-24 object-contain rounded-xl" />
+      <p className="text-sm text-[#555]">{message}</p>
+      {action && (
+        <button
+          onClick={action.onClick}
+          className="bg-[#1C1C1C] hover:bg-[#C9A84C] text-white text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-lg transition"
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  );
+}
 
 export default function App() {
-  const { products, adminSession, logoutAdmin, loginAdmin } = useCitrinoStore();
+  const {
+    products,
+    adminSession,
+    adminSessionStatus,
+    catalogHasData,
+    catalogStatus,
+    catalogError,
+    logoutAdmin,
+    loginAdmin,
+  } = useCitrinoStore();
 
   // Primary Navigation State
-  const [currentView, setCurrentView] = useState<string>('home');
+  const [currentView, setCurrentView] = useState<string>(() =>
+    typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').startsWith('/admin')
+      ? 'admin'
+      : 'home'
+  );
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [catalogCategory, setCatalogCategory] = useState<string>('all');
   const [catalogSearch, setCatalogSearch] = useState<string>('');
@@ -48,6 +85,16 @@ export default function App() {
 
   // Cart Drawer State
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
+
+  // Mantém o endereço /admin em sincronia com a tela do painel (dá pra favoritar)
+  useEffect(() => {
+    const onAdminPath = window.location.pathname.replace(/\/+$/, '').startsWith('/admin');
+    if (currentView === 'admin' && !onAdminPath) {
+      window.history.replaceState(null, '', '/admin');
+    } else if (currentView !== 'admin' && onAdminPath) {
+      window.history.replaceState(null, '', '/');
+    }
+  }, [currentView]);
 
   // Scroll to top on view change
   useEffect(() => {
@@ -81,6 +128,10 @@ export default function App() {
 
   // If inside Admin Panel
   if (currentView === 'admin') {
+    // Ainda conferindo se já existe login salvo neste navegador
+    if (adminSessionStatus === 'loading') {
+      return <SplashScreen message="Verificando acesso..." />;
+    }
     // Show login page if not authenticated
     if (!adminSession) {
       return (
@@ -95,7 +146,7 @@ export default function App() {
     // Role guard: redirect to dashboard if current module is not allowed for this role
     const role = adminSession.role;
     const ROLE_MODULES: Record<string, AdminModule[]> = {
-      admin:      ['dashboard','products','orders','customers','financial','marketing','reports','settings'],
+      admin:      ['dashboard','products','content','orders','customers','financial','marketing','reports','settings'],
       financeiro: ['dashboard','orders','financial','reports'],
       operador:   ['dashboard','orders','products'],
     };
@@ -107,8 +158,8 @@ export default function App() {
         currentModule={safeModule}
         onSelectModule={(mod) => setAdminModule(mod)}
         onExitAdmin={() => setCurrentView('home')}
-        onLogout={() => {
-          logoutAdmin();
+        onLogout={async () => {
+          await logoutAdmin();
           setCurrentView('home');
         }}
       >
@@ -117,6 +168,7 @@ export default function App() {
             <AdminDashboard onNavigateModule={(mod) => setAdminModule(mod)} />
           )}
           {safeModule === 'products' && <AdminProducts />}
+          {safeModule === 'content' && <AdminContent />}
           {safeModule === 'orders' && <AdminOrders />}
           {safeModule === 'customers' && <AdminCustomers />}
           {safeModule === 'financial' && <AdminFinancial />}
@@ -126,6 +178,19 @@ export default function App() {
         </AdminErrorBoundary>
       </AdminLayout>
     );
+  }
+
+  // Loja: espera o catálogo real chegar (nunca mostra produto de demonstração)
+  if (!catalogHasData) {
+    if (catalogStatus === 'error') {
+      return (
+        <SplashScreen
+          message={catalogError || 'Não foi possível carregar a loja agora.'}
+          action={{ label: 'Tentar novamente', onClick: () => window.location.reload() }}
+        />
+      );
+    }
+    return <SplashScreen message="Carregando..." />;
   }
 
   // Storefront Layout
