@@ -17,13 +17,15 @@ import {
   ChevronRight,
   ShieldCheck,
   Sparkles,
-  AlertTriangle
+  AlertTriangle,
+  FileText
 } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
 
 export type AdminModule = 
   | 'dashboard'
   | 'products'
+  | 'content'
   | 'orders'
   | 'customers'
   | 'financial'
@@ -46,7 +48,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onLogout,
   children,
 }) => {
-  const { currentAdminUser, adminSession, orders, products } = useCitrinoStore();
+  const { currentAdminUser, adminSession, orders, allProducts: products } = useCitrinoStore();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -63,6 +65,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'dashboard',  label: 'Dashboard',              icon: LayoutDashboard, badge: null, roles: ['admin', 'financeiro', 'operador'] },
     { id: 'orders',     label: 'Gestão de Pedidos',       icon: ShoppingCart,    badge: pendingOrdersCount > 0 ? pendingOrdersCount : null, roles: ['admin', 'financeiro', 'operador'] },
     { id: 'products',   label: 'Catálogo & Estoque',      icon: Package,         badge: lowStockCount > 0 ? `${lowStockCount} alertas` : null, badgeAlert: true, roles: ['admin', 'operador'] },
+    { id: 'content',    label: 'Conteúdo do Site',        icon: FileText,        badge: null, roles: ['admin'] },
     { id: 'customers',  label: 'Clientes & B2B',          icon: Users,           badge: null, roles: ['admin'] },
     { id: 'financial',  label: 'Financeiro & DRE',        icon: DollarSign,      badge: null, roles: ['admin', 'financeiro'] },
     { id: 'marketing',  label: 'Marketing & Cupons',      icon: Megaphone,       badge: null, roles: ['admin'] },
@@ -192,7 +195,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       </aside>
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'md:pl-64' : 'md:pl-20'}`}>
+      <div className={`flex-1 min-w-0 flex flex-col transition-all duration-300 ${sidebarOpen ? 'md:pl-64' : 'md:pl-20'}`}>
         {/* Top Header Bar */}
         <header className="h-16 bg-white border-b border-gray-200 sticky top-0 z-30 px-4 sm:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -217,7 +220,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               Módulo Atual:
             </span>
             <span className="text-xs font-bold text-gray-900 uppercase tracking-wider bg-gray-100 px-2.5 py-1 rounded">
-              {currentModule}
+              {navItems.find((n) => n.id === currentModule)?.label || currentModule}
             </span>
           </div>
 
@@ -256,7 +259,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </header>
 
         {/* Dynamic Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           {children}
         </main>
       </div>

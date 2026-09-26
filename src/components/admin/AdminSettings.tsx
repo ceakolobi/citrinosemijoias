@@ -18,6 +18,8 @@ export const AdminSettings: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'company' | 'shipping' | 'payments' | 'team'>('company');
   const [feedback, setFeedback] = useState<boolean>(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState<boolean>(false);
 
   // Form states
   const [name, setName] = useState(companySettings.name);
@@ -30,6 +32,7 @@ export const AdminSettings: React.FC = () => {
   const [city, setCity] = useState(companySettings.city);
   const [state, setState] = useState(companySettings.state);
   const [freeShipping, setFreeShipping] = useState(companySettings.freeShippingThreshold);
+  const [instagram, setInstagram] = useState(companySettings.instagram);
 
   // Payment credentials
   const [mpPublicKey, setMpPublicKey] = useState('APP_USR-78291029-4820-41a2-b912-892182910283');
@@ -43,22 +46,35 @@ export const AdminSettings: React.FC = () => {
     { id: 'u3', name: 'Carlos Eduardo', email: 'expedicao@citrinosemijoias.com.br', role: 'Estoquista / Expedição', active: true },
   ]);
 
-  const handleSaveAll = (e: React.FormEvent) => {
+  const handleSaveAll = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateCompanySettings({
-      name,
-      cnpj,
-      stateRegistration: ie,
-      email,
-      phone,
-      whatsapp,
-      address,
-      city,
-      state,
-      freeShippingThreshold: Number(freeShipping),
-    });
-    setFeedback(true);
-    setTimeout(() => setFeedback(false), 3000);
+    setSaveError(null);
+    setSaving(true);
+    try {
+      const res = await updateCompanySettings({
+        name,
+        cnpj,
+        stateRegistration: ie,
+        email,
+        phone,
+        whatsapp,
+        address,
+        city,
+        state,
+        instagram,
+        freeShippingThreshold: Number(freeShipping),
+      });
+      if (res.ok === true) {
+        setFeedback(true);
+        setTimeout(() => setFeedback(false), 3000);
+      } else {
+        setSaveError((res as { error: string }).error);
+      }
+    } catch (err: any) {
+      setSaveError(err?.message || 'Não foi possível salvar agora.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -79,14 +95,20 @@ export const AdminSettings: React.FC = () => {
           className="bg-[#E97527] hover:bg-[#D5651B] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg transition flex items-center gap-2 shadow-xs cursor-pointer"
         >
           <Save className="w-4 h-4" />
-          <span>Salvar Alterações</span>
+          <span>{saving ? 'Salvando...' : 'Salvar Alterações'}</span>
         </button>
       </div>
+
+      {saveError && (
+        <div className="p-3 bg-red-50 text-red-700 rounded-lg text-xs font-semibold border border-red-200">
+          {saveError}
+        </div>
+      )}
 
       {feedback && (
         <div className="p-3 bg-emerald-50 text-emerald-800 rounded-lg flex items-center gap-2 text-xs font-semibold border border-emerald-200">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          Configurações da empresa atualizadas e persistidas com sucesso!
+          Dados da empresa salvos! Já aparecem no rodapé e na página de contato da loja.
         </div>
       )}
 
@@ -194,6 +216,16 @@ export const AdminSettings: React.FC = () => {
                 type="text"
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
+                className="w-full bg-[#F4F5F7] border border-gray-200 rounded p-2.5 focus:border-[#E97527] focus:outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-semibold text-gray-700">Instagram (ex.: @citrinosemijoias)</label>
+              <input
+                type="text"
+                value={instagram}
+                onChange={(e) => setInstagram(e.target.value)}
                 className="w-full bg-[#F4F5F7] border border-gray-200 rounded p-2.5 focus:border-[#E97527] focus:outline-none"
               />
             </div>

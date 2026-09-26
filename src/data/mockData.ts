@@ -1,4 +1,4 @@
-import { Product, Category, Collection, Customer, Order, Receivable, Payable, Coupon, HomeBanner, AdminUser } from '../types';
+import { Product, Category, Collection, Customer, Order, Receivable, Payable, Coupon, HomeBanner } from '../types';
 
 export const INITIAL_CATEGORIES: Category[] = [
   {
@@ -985,44 +985,5 @@ export const INITIAL_BANNERS: HomeBanner[] = [
     tag: 'BEST-SELLER',
     active: true,
     order: 2,
-  }
-];
-
-export const INITIAL_ADMIN_USERS: AdminUser[] = [
-  {
-    id: 'usr-1',
-    name: 'Ana Carolina Dias (Diretora)',
-    email: 'admin@citrinosemijoias.com.br',
-    role: 'admin',
-    active: true,
-    lastLogin: '2026-09-14 14:10',
-    password: 'citrino@2024',
-  },
-  {
-    id: 'usr-2',
-    name: 'Roberto Valente (Financeiro)',
-    email: 'financeiro@citrinosemijoias.com.br',
-    role: 'financeiro',
-    active: true,
-    lastLogin: '2026-09-14 11:25',
-    password: 'fin@2024',
-  },
-  {
-    id: 'usr-3',
-    name: 'Camila Santos (Expedição / SAC)',
-    email: 'operador@citrinosemijoias.com.br',
-    role: 'operador',
-    active: true,
-    lastLogin: '2026-09-14 13:50',
-    password: 'op@2024',
-  },
-  {
-    id: 'usr-4',
-    name: 'Mariah',
-    email: 'mariah@citrinosemijoias.com.br',
-    role: 'admin',
-    active: true,
-    lastLogin: '',
-    password: 'Mariah@Citrino2024',
   }
 ];

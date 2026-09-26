@@ -14,6 +14,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
+import { useSiteText } from '../../services/siteText';
 
 interface FooterProps {
   onNavigate: (view: string, extra?: any) => void;
@@ -22,6 +23,7 @@ interface FooterProps {
 
 export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToAdmin }) => {
   const { companySettings } = useCitrinoStore();
+  const t = useSiteText();
 
   return (
     <footer className="bg-[#161616] text-[#FAF8F4] border-t border-[#2A2A2A] pt-16 pb-12">
@@ -33,9 +35,9 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-serif-luxury text-lg text-white font-medium">Banho Nobre 10 Milésimos</h4>
+              <h4 className="font-serif-luxury text-lg text-white font-medium">{t('footer.strip1.title')}</h4>
               <p className="text-xs text-[#9E9B97] mt-1 leading-relaxed">
-                Tripla camada de ouro 18k e verniz Diamond para brilho espelhado e durabilidade máxima.
+                {t('footer.strip1.text')}
               </p>
             </div>
           </div>
@@ -45,9 +47,9 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-serif-luxury text-lg text-white font-medium">1 Ano de Garantia</h4>
+              <h4 className="font-serif-luxury text-lg text-white font-medium">{t('footer.strip2.title')}</h4>
               <p className="text-xs text-[#9E9B97] mt-1 leading-relaxed">
-                Certificado oficial acompanha todas as peças com garantia no banho e cravação.
+                {t('footer.strip2.text')}
               </p>
             </div>
           </div>
@@ -57,9 +59,9 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
               <Truck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-serif-luxury text-lg text-white font-medium">Envio Seguro para o Brasil</h4>
+              <h4 className="font-serif-luxury text-lg text-white font-medium">{t('footer.strip3.title')}</h4>
               <p className="text-xs text-[#9E9B97] mt-1 leading-relaxed">
-                Frete grátis para compras acima de R$ 299 com seguro postal incluso e rastreamento.
+                {t('footer.strip3.text')}
               </p>
             </div>
           </div>
@@ -69,9 +71,9 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
               <RotateCcw className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-serif-luxury text-lg text-white font-medium">Primeira Troca Grátis</h4>
+              <h4 className="font-serif-luxury text-lg text-white font-medium">{t('footer.strip4.title')}</h4>
               <p className="text-xs text-[#9E9B97] mt-1 leading-relaxed">
-                Até 7 dias após o recebimento para troca fácil ou devolução sem complicações.
+                {t('footer.strip4.text')}
               </p>
             </div>
           </div>
@@ -100,7 +102,7 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
               </div>
             </div>
             <p className="text-xs text-[#A8A49E] leading-relaxed max-w-sm">
-              Criamos semijoias atemporais inspiradas na alta joalheria mundial. Cada detalhe é concebido para exaltar a elegância feminina com qualidade premium e acabamento artesanal em Limeira/SP.
+              {t('footer.about')}
             </p>
             <div className="flex items-center gap-3 pt-2 text-xs text-[#A8A49E]">
               <span className="flex items-center gap-1.5 bg-[#222] px-3 py-1.5 rounded-full border border-[#333]">

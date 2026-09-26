@@ -12,6 +12,12 @@
   .font-display {
     font-family: 'Playfair Display', serif;
   }
+
+  /* Campos podem encolher dentro de grades/linhas: evita formulário largo demais no celular */
+  input, select, textarea {
+    min-width: 0;
+    max-width: 100%;
+  }
 }
 
 /* Custom scrollbar for dark sidebar and drawers */

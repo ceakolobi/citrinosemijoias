@@ -13,6 +13,7 @@ import {
   Truck
 } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
+import { useSiteText } from '../../services/siteText';
 
 interface NavbarProps {
   currentView: string;
@@ -28,6 +29,7 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
   onSwitchToAdmin,
 }) => {
   const { cart, wishlist, currentCustomer, categories } = useCitrinoStore();
+  const t = useSiteText();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,19 +51,19 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="hidden md:flex items-center gap-4 text-[11px] font-medium text-[#D1CECB]">
             <span className="flex items-center gap-1.5">
-              <Truck className="w-3.5 h-3.5 text-[#C9A84C]" /> Frete Grátis acima de R$ 299
+              <Truck className="w-3.5 h-3.5 text-[#C9A84C]" /> {t('navbar.promo1')}
             </span>
             <span className="text-[#555]">•</span>
-            <span>10x Sem Juros no Cartão</span>
+            <span>{t('navbar.promo2')}</span>
             <span className="text-[#555]">•</span>
             <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#C9A84C]" /> 1 Ano de Garantia no Banho
+              <ShieldCheck className="w-3.5 h-3.5 text-[#C9A84C]" /> {t('navbar.promo3')}
             </span>
           </div>
 
           <div className="w-full md:w-auto flex items-center justify-between md:justify-end gap-3 text-[11px]">
             <span className="text-[#C9A84C] font-medium flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> Semijoias Finas Banhadas a Ouro 18k
+              <Sparkles className="w-3 h-3" /> {t('navbar.promo4')}
             </span>
             {/* Direct Switcher to Citrino ERP Panel */}
             <button

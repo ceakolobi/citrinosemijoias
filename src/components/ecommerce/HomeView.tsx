@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   ArrowRight, 
   Sparkles, 
@@ -11,6 +11,7 @@ import {
   CheckCircle2 
 } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
+import { useSiteText } from '../../services/siteText';
 import { Product } from '../../types';
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=900&auto=format&fit=crop';
@@ -21,9 +22,29 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct }) => {
-  const { products, categories, collections, banners, addToCart, toggleWishlist, wishlist } = useCitrinoStore();
+  const { products, categories, banners, addToCart, toggleWishlist, wishlist } = useCitrinoStore();
+  const t = useSiteText();
 
-  const activeBanner = banners.find((b) => b.active) || banners[0];
+  const activeBanners = banners.filter((b) => b.active);
+  const rotation = activeBanners.length ? activeBanners : banners.slice(0, 1);
+  const [bannerIdx, setBannerIdx] = useState(0);
+  useEffect(() => {
+    if (rotation.length < 2) return;
+    const t = setInterval(() => setBannerIdx((i) => (i + 1) % rotation.length), 7000);
+    return () => clearInterval(t);
+  }, [rotation.length]);
+  const activeBanner =
+    rotation[bannerIdx % Math.max(rotation.length, 1)] || {
+      id: 'default',
+      title: 'Citrino Semijoias',
+      subtitle: 'Semijoias finas com banho de ouro 18k.',
+      ctaText: 'Explorar Catálogo',
+      ctaLink: '/catalogo',
+      image: FALLBACK_IMAGE,
+      tag: 'ALTA JOALHERIA CONTEMPORÂNEA',
+      active: true,
+      order: 1,
+    };
   const featuredProducts = products.filter((p) => p.featured && p.active).slice(0, 4);
   const bestSellers = products.filter((p) => p.bestSeller && p.active).slice(0, 4);
 
@@ -72,7 +93,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
                 onClick={() => onNavigate('about')}
                 className="bg-transparent hover:bg-white/10 text-[#FAF8F4] border border-white/30 px-6 py-3.5 rounded font-medium text-xs tracking-[0.2em] uppercase transition"
               >
-                Nossa Garantia 1 Ano
+                {t('home.hero.secondaryCta')}
               </button>
             </div>
           </div>
@@ -83,10 +104,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-xl mx-auto mb-10">
           <p className="text-xs font-semibold tracking-[0.25em] text-[#C9A84C] uppercase">
-            Navegue por Categoria
+            {t('home.categories.eyebrow')}
           </p>
           <h2 className="text-2xl sm:text-3xl font-serif-luxury text-[#1C1C1C] mt-1">
-            Joias Feitas Para Encantar
+            {t('home.categories.title')}
           </h2>
         </div>
 
@@ -141,17 +162,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
           <div>
             <span className="text-xs font-semibold tracking-[0.25em] text-[#C9A84C] uppercase">
-              Coleção Especial
+              {t('home.featured.eyebrow')}
             </span>
             <h2 className="text-2xl sm:text-3xl font-serif-luxury text-[#1C1C1C] mt-1">
-              Destaques da Joalheria
+              {t('home.featured.title')}
             </h2>
           </div>
           <button
             onClick={() => onNavigate('catalog')}
             className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest font-semibold text-[#1C1C1C] hover:text-[#C9A84C] transition"
           >
-            Ver Todas as Peças <ArrowRight className="w-3.5 h-3.5" />
+            {t('home.featured.link')} <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
@@ -271,27 +292,27 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             <div className="lg:col-span-5 space-y-6">
               <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#C9A84C]">
-                Manifesto da Marca
+                {t('home.manifesto.eyebrow')}
               </span>
               <h2 className="text-3xl sm:text-4xl font-serif-luxury font-light text-[#1C1C1C] leading-tight">
-                O Ouro Que Te Acompanha Em Cada Conquista
+                {t('home.manifesto.title')}
               </h2>
               <p className="text-sm text-[#555] leading-relaxed">
-                Cada semijoia Citrino passa por um rigoroso processo de galvanoplastia em Limeira, polo joalheiro de excelência nacional. Aplicamos 10 milésimos de ouro 18k e selamento em nanotecnologia Diamond, garantindo que o brilho permaneça intacto por anos.
+                {t('home.manifesto.body')}
               </p>
 
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#1C1C1C]">
-                  <CheckCircle2 className="w-4 h-4 text-[#C9A84C]" /> 100% Níquel Free
+                  <CheckCircle2 className="w-4 h-4 text-[#C9A84C]" /> {t('home.manifesto.feature1')}
                 </div>
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#1C1C1C]">
-                  <CheckCircle2 className="w-4 h-4 text-[#C9A84C]" /> Cravação Joalheira
+                  <CheckCircle2 className="w-4 h-4 text-[#C9A84C]" /> {t('home.manifesto.feature2')}
                 </div>
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#1C1C1C]">
-                  <CheckCircle2 className="w-4 h-4 text-[#C9A84C]" /> Verniz Antialérgico
+                  <CheckCircle2 className="w-4 h-4 text-[#C9A84C]" /> {t('home.manifesto.feature3')}
                 </div>
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#1C1C1C]">
-                  <CheckCircle2 className="w-4 h-4 text-[#C9A84C]" /> Troca sem Custo
+                  <CheckCircle2 className="w-4 h-4 text-[#C9A84C]" /> {t('home.manifesto.feature4')}
                 </div>
               </div>
 
@@ -300,7 +321,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
                   onClick={() => onNavigate('revendedora')}
                   className="bg-[#1C1C1C] hover:bg-[#333] text-white px-6 py-3 rounded text-xs tracking-widest uppercase font-medium transition cursor-pointer"
                 >
-                  Quero Revender Citrino (B2B)
+                  {t('home.manifesto.cta')}
                 </button>
               </div>
             </div>
@@ -316,17 +337,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
                   />
                 </div>
                 <span className="text-[10px] tracking-[0.25em] text-[#C9A84C] uppercase font-bold">
-                  Identidade Visual Exclusiva
+                  {t('home.brandcard.eyebrow')}
                 </span>
                 <h4 className="font-serif-luxury text-lg text-[#1C1C1C] mt-1 font-semibold">
-                  A Arte do Citrino Nobre
+                  {t('home.brandcard.title')}
                 </h4>
                 <p className="text-[11px] text-[#666] mt-1 leading-relaxed">
-                  Monograma dourado com esmaltação verde sálvia e pedra citrino lapidada em alta joalheria.
+                  {t('home.brandcard.text')}
                 </p>
               </div>
               <img
-                src={collections[0].image}
+                src={t('home.manifesto.image')}
                 alt="Coleção Citrino"
                 className="w-full h-full min-h-[320px] object-cover rounded-2xl shadow-md"
                 onError={(e) => {
@@ -342,10 +363,10 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-xl mx-auto mb-10">
           <span className="text-xs font-semibold tracking-[0.25em] text-[#C9A84C] uppercase">
-            As Mais Desejadas
+            {t('home.best.eyebrow')}
           </span>
           <h2 className="text-2xl sm:text-3xl font-serif-luxury text-[#1C1C1C] mt-1">
-            Favoritas das Nossas Clientes
+            {t('home.best.title')}
           </h2>
         </div>
 
@@ -371,11 +392,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
                 </span>
               </div>
               <div>
-                <div className="flex items-center gap-1 text-[#C9A84C] text-xs">
-                  <Star className="w-3.5 h-3.5 fill-[#C9A84C]" />
-                  <span className="font-semibold text-[#1C1C1C]">{product.rating}</span>
-                  <span className="text-[#888] text-[11px]">({product.reviewCount})</span>
-                </div>
+                {product.reviewCount > 0 && (
+                  <div className="flex items-center gap-1 text-[#C9A84C] text-xs">
+                    <Star className="w-3.5 h-3.5 fill-[#C9A84C]" />
+                    <span className="font-semibold text-[#1C1C1C]">{product.rating}</span>
+                    <span className="text-[#888] text-[11px]">({product.reviewCount})</span>
+                  </div>
+                )}
                 <h4 className="font-serif-luxury text-base text-[#1C1C1C] font-medium mt-1 line-clamp-1 group-hover:text-[#C9A84C] transition">
                   {product.name}
                 </h4>
@@ -389,14 +412,15 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
       </section>
 
       {/* 6. CLIENT TESTIMONIALS */}
+      {t('home.testimonials.visible') !== 'não' && (
       <section className="bg-white border-t border-[#EBE7DF] py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-xl mx-auto mb-12">
             <span className="text-xs font-semibold tracking-[0.25em] text-[#C9A84C] uppercase">
-              Depoimentos Reais
+              {t('home.testimonials.eyebrow')}
             </span>
             <h2 className="text-2xl sm:text-3xl font-serif-luxury text-[#1C1C1C] mt-1">
-              O Que Dizem Nossas Clientes
+              {t('home.testimonials.title')}
             </h2>
           </div>
 
@@ -408,11 +432,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
                 ))}
               </div>
               <p className="text-xs sm:text-sm text-[#444] italic leading-relaxed">
-                "A Choker Riviera superou todas as minhas expectativas! O fecho é idêntico ao de uma joia maciça e o brilho das zircônias é surreal. Uso há 6 meses e continua como no dia que chegou."
+                "{t('home.testimonial1.text')}"
               </p>
               <div className="pt-2 border-t border-[#E8E4DC]">
-                <p className="text-xs font-semibold text-[#1C1C1C]">Beatriz Alcantara</p>
-                <p className="text-[11px] text-[#888]">São Paulo - SP • Compra Verificada</p>
+                <p className="text-xs font-semibold text-[#1C1C1C]">{t('home.testimonial1.name')}</p>
+                <p className="text-[11px] text-[#888]">{t('home.testimonial1.place')}</p>
               </div>
             </div>
 
@@ -423,11 +447,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
                 ))}
               </div>
               <p className="text-xs sm:text-sm text-[#444] italic leading-relaxed">
-                "Sou revendedora há 2 anos e as semijoias da Citrino são as que mais vendem no meu showroom. A caixinha de veludo, a garantia de 1 ano e o acabamento impecável dão muita credibilidade."
+                "{t('home.testimonial2.text')}"
               </p>
               <div className="pt-2 border-t border-[#E8E4DC]">
-                <p className="text-xs font-semibold text-[#1C1C1C]">Carla Menezes</p>
-                <p className="text-[11px] text-[#888]">Belo Horizonte - MG • Revendedora B2B</p>
+                <p className="text-xs font-semibold text-[#1C1C1C]">{t('home.testimonial2.name')}</p>
+                <p className="text-[11px] text-[#888]">{t('home.testimonial2.place')}</p>
               </div>
             </div>
 
@@ -438,16 +462,17 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
                 ))}
               </div>
               <p className="text-xs sm:text-sm text-[#444] italic leading-relaxed">
-                "Tenho muita alergia a níquel e nunca conseguia usar brincos por muito tempo. Os da Citrino foram os primeiros que não me causaram irritação alguma. Estou apaixonada!"
+                "{t('home.testimonial3.text')}"
               </p>
               <div className="pt-2 border-t border-[#E8E4DC]">
-                <p className="text-xs font-semibold text-[#1C1C1C]">Fernanda Guimarães</p>
-                <p className="text-[11px] text-[#888]">Curitiba - PR • Compra Verificada</p>
+                <p className="text-xs font-semibold text-[#1C1C1C]">{t('home.testimonial3.name')}</p>
+                <p className="text-[11px] text-[#888]">{t('home.testimonial3.place')}</p>
               </div>
             </div>
           </div>
         </div>
       </section>
+      )}
     </div>
   );
 };

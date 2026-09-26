@@ -21,7 +21,7 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateModule }) => {
-  const { orders, products, customers, financialEntries } = useCitrinoStore();
+  const { orders, allProducts: products, customers, financialEntries } = useCitrinoStore();
 
   // Metrics calculations
   const totalRevenue = orders
