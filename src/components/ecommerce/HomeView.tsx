@@ -118,6 +118,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
                 onNavigate('aneis');
               } else if (category.name === 'Colares & Chokers') {
                 onNavigate('colares');
+              } else if (category.name === 'Perfumes') {
+                onNavigate('perfumes');
               } else if (category.name.includes('Atacado') || category.name.includes('Revenda')) {
                 onNavigate('revendedora');
               } else {

@@ -115,11 +115,24 @@ export function useCitrinoStore() {
   );
   const banners = remote.banners;
   const categories = useMemo<Category[]>(
-    () =>
-      remote.categories.map((c) => ({
+    () => {
+      const mapped = remote.categories.map((c) => ({
         ...c,
         itemCount: remote.products.filter((p) => p.active !== false && p.category === c.name).length,
-      })),
+      }));
+      // Garante que "Perfumes" sempre aparece (nova linha de produtos)
+      if (!mapped.some((c) => c.name === 'Perfumes')) {
+        mapped.push({
+          id: 'cat-perfumes',
+          name: 'Perfumes',
+          slug: 'perfumes',
+          icon: 'Wind',
+          image: 'https://images.unsplash.com/photo-1541643600914-78b084683702?q=80&w=800&auto=format&fit=crop',
+          itemCount: remote.products.filter((p) => p.active !== false && p.category === 'Perfumes').length,
+        });
+      }
+      return mapped;
+    },
     [remote.categories, remote.products]
   );
   const [collections] = useState<Collection[]>(() => getLocal(STORAGE_KEYS.COLLECTIONS, INITIAL_COLLECTIONS));
