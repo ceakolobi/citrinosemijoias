@@ -68,7 +68,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [installments, setInstallments] = useState<number>(1);
   const [cardNumber, setCardNumber] = useState<string>('4532 •••• •••• 9812');
-  const [cardHolder, setCardHolder] = useState<string>(currentCustomer?.name || 'JULIANA P CAMARGO');
+  const [cardHolder, setCardHolder] = useState<string>(currentCustomer?.name || '');
   const [cardExp, setCardExp] = useState<string>('11/29');
   const [cardCvv, setCardCvv] = useState<string>('741');
 

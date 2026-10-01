@@ -44,7 +44,7 @@ const STORAGE_KEYS = {
   COUPONS: 'citrino_coupons_v1',
   CART: 'citrino_cart_v1',
   WISHLIST: 'citrino_wishlist_v1',
-  CURRENT_USER: 'citrino_current_user_v1',
+  CURRENT_USER: 'citrino_current_user_v2',
   ACTIVE_ROLE: 'citrino_active_role_v1',
 };
 
