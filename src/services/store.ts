@@ -131,6 +131,17 @@ export function useCitrinoStore() {
           itemCount: remote.products.filter((p) => p.active !== false && p.category === 'Perfumes').length,
         });
       }
+      // Idem para "Piercings"
+      if (!mapped.some((c) => c.name === 'Piercings')) {
+        mapped.push({
+          id: 'cat-piercings',
+          name: 'Piercings',
+          slug: 'piercings',
+          icon: 'Sparkles',
+          image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800&auto=format&fit=crop',
+          itemCount: remote.products.filter((p) => p.active !== false && p.category === 'Piercings').length,
+        });
+      }
       return mapped;
     },
     [remote.categories, remote.products]

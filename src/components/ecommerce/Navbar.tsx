@@ -135,6 +135,14 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
               Perfumes
             </button>
             <button
+              onClick={() => onNavigate('piercings')}
+              className={`text-xs tracking-[0.18em] uppercase transition font-medium ${
+                currentView === 'piercings' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
+              }`}
+            >
+              Piercings
+            </button>
+            <button
               onClick={() => onNavigate('revendedora')}
               className={`text-xs tracking-[0.18em] uppercase transition font-semibold flex items-center gap-1 ${
                 currentView === 'revendedora' ? 'text-[#C9A84C]' : 'text-[#E8705A] hover:text-[#c75540]'
@@ -305,6 +313,13 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
               className="text-left py-2 border-b border-gray-100 text-[#1C1C1C] flex items-center justify-between"
             >
               <span>Perfumes</span>
+              <span className="text-[10px] bg-[#FAF8F4] text-[#C9A84C] border border-[#E8E4DC] px-2 py-0.5 rounded font-medium">Novo</span>
+            </button>
+            <button
+              onClick={() => { onNavigate('piercings'); setMobileMenuOpen(false); }}
+              className="text-left py-2 border-b border-gray-100 text-[#1C1C1C] flex items-center justify-between"
+            >
+              <span>Piercings</span>
               <span className="text-[10px] bg-[#FAF8F4] text-[#C9A84C] border border-[#E8E4DC] px-2 py-0.5 rounded font-medium">Novo</span>
             </button>
             <button

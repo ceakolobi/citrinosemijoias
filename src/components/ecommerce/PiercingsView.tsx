@@ -14,25 +14,26 @@ import {
 import { useCitrinoStore } from '../../services/store';
 import { Product } from '../../types';
 
-interface PerfumesViewProps {
+interface PiercingsViewProps {
   onOpenProduct: (product: Product) => void;
   onNavigate: (view: string, extra?: any) => void;
   onOpenCart: () => void;
 }
 
-// Tipos de perfume (somente estes existem na loja). `terms` = palavras que
+// Tipos de piercing (somente estes existem na loja). `terms` = palavras que
 // identificam o tipo no nome, descrição ou detalhes do produto cadastrado no ERP.
-const FRAGRANCE_FAMILIES = [
-  { id: 'all', label: 'Todos os Perfumes', terms: [] as string[] },
-  { id: 'suave', label: 'Perfumes suaves', terms: ['suave', 'suaves', 'delicad', 'leve'] },
-  { id: 'fresco', label: 'Perfumes frescos', terms: ['fresco', 'frescos', 'frescor', 'aquátic', 'aquatic'] },
-  { id: 'citrico', label: 'Perfumes cítricos', terms: ['cítric', 'citric', 'limão', 'limao', 'laranja', 'bergamota'] },
-  { id: 'floral', label: 'Perfumes florais', terms: ['floral', 'florais', 'flores', 'flor '] },
-  { id: 'doce', label: 'Perfumes doces', terms: ['doce', 'doces', 'baunilha', 'gourmand', 'caramelo'] },
-  { id: 'marcante', label: 'Perfumes marcantes', terms: ['marcante', 'marcantes', 'intenso', 'amadeirad', 'oriental', 'alta fixa'] },
+const PIERCING_TYPES = [
+  { id: 'all', label: 'Todos os Piercings', terms: [] as string[] },
+  { id: 'orelha', label: 'Piercing de orelha', terms: ['orelha', 'hélix', 'helix', 'conch', 'lóbulo', 'lobulo'] },
+  { id: 'tragus', label: 'Tragus', terms: ['tragus'] },
+  { id: 'segundo', label: 'Segundo furo', terms: ['segundo furo', '2º furo', '2o furo', 'segundo'] },
+  { id: 'delicado', label: 'Piercings delicados', terms: ['delicad', 'fino', 'minimalist', 'discreto'] },
+  { id: 'zirconia', label: 'Piercings com zircônia', terms: ['zircônia', 'zirconia', 'zircon'] },
+  { id: 'dourado', label: 'Dourados', terms: ['dourad', 'ouro'] },
+  { id: 'prateado', label: 'Prateados', terms: ['pratead', 'prata'] },
 ];
 
-export const PerfumesView: React.FC<PerfumesViewProps> = ({
+export const PiercingsView: React.FC<PiercingsViewProps> = ({
   onOpenProduct,
   onNavigate,
   onOpenCart,
@@ -50,11 +51,9 @@ export const PerfumesView: React.FC<PerfumesViewProps> = ({
     return products.filter((p) => {
       if (!p.active) return false;
       const isPerfume =
-        p.category === 'Perfumes' ||
-        p.name.toLowerCase().includes('perfume') ||
-        p.name.toLowerCase().includes('fragr') ||
-        p.name.toLowerCase().includes('deo') ||
-        p.name.toLowerCase().includes('body splash');
+        p.category === 'Piercings' ||
+        p.name.toLowerCase().includes('piercing') ||
+        p.name.toLowerCase().includes('tragus');
       if (!isPerfume) return false;
 
       // Busca textual
@@ -67,9 +66,9 @@ export const PerfumesView: React.FC<PerfumesViewProps> = ({
           return false;
       }
 
-      // Tipo de perfume
+      // Tipo de piercing
       if (familyFilter !== 'all') {
-        const fam = FRAGRANCE_FAMILIES.find((f) => f.id === familyFilter);
+        const fam = PIERCING_TYPES.find((f) => f.id === familyFilter);
         const desc = (p.description + ' ' + p.name + ' ' + (p.details?.join(' ') || '')).toLowerCase() + ' ';
         if (!fam || !fam.terms.some((t) => desc.includes(t))) return false;
       }
@@ -123,19 +122,18 @@ export const PerfumesView: React.FC<PerfumesViewProps> = ({
             Nova Linha
           </span>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif-luxury font-medium text-white tracking-[0.12em] uppercase leading-tight mb-4">
-            Perfumes
+            Piercings
           </h1>
           <p className="text-base sm:text-lg text-[#D1CECB] max-w-xl leading-relaxed mb-8">
-            Fragrâncias exclusivas que traduzem elegância, feminilidade e sofisticação. Cada essência
-            foi pensada para acompanhar você do primeiro ao último traço do dia.
+            Piercings delicados e elegantes para compor o seu estilo, com acabamento dourado ou prateado e zircônia que brilha em cada detalhe.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-[#C9A84C]">
             <span className="flex items-center gap-2">
-              <Droplets className="w-4 h-4" /> Essências Selecionadas
+              <Droplets className="w-4 h-4" /> Peças Selecionadas
             </span>
             <span className="text-[#555]">•</span>
             <span className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" /> Alta Fixação
+              <Sparkles className="w-4 h-4" /> Acabamento Delicado
             </span>
             <span className="text-[#555]">•</span>
             <span className="flex items-center gap-2">
@@ -154,7 +152,7 @@ export const PerfumesView: React.FC<PerfumesViewProps> = ({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999]" />
             <input
               type="text"
-              placeholder="Buscar perfumes…"
+              placeholder="Buscar piercings…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-[#E0DBD0] rounded-lg text-sm bg-white focus:outline-none focus:border-[#C9A84C] focus:ring-1 focus:ring-[#C9A84C]"
@@ -191,10 +189,10 @@ export const PerfumesView: React.FC<PerfumesViewProps> = ({
               {/* Família olfativa */}
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-[0.15em] text-[#888] mb-3">
-                  Tipo de perfume
+                  Tipo de piercing
                 </h3>
                 <div className="space-y-2">
-                  {FRAGRANCE_FAMILIES.map((f) => (
+                  {PIERCING_TYPES.map((f) => (
                     <button
                       key={f.id}
                       onClick={() => setFamilyFilter(f.id)}
@@ -233,11 +231,11 @@ export const PerfumesView: React.FC<PerfumesViewProps> = ({
                   <Wind className="w-9 h-9 text-[#C9A84C]" />
                 </div>
                 <h2 className="text-xl font-serif-luxury font-semibold text-[#1C1C1C] mb-2">
-                  Em breve — nossa linha de Perfumes
+                  Em breve — nossa linha de Piercings
                 </h2>
                 <p className="text-sm text-[#777] max-w-sm mb-6">
                   Os primeiros produtos dessa coleção especial estão a caminho. Acesse o{' '}
-                  <strong>Painel ERP Citrino</strong> para adicionar os perfumes e eles aparecerão
+                  <strong>Painel ERP Citrino</strong> para adicionar os piercings e eles aparecerão
                   automaticamente aqui.
                 </p>
                 <div className="flex gap-3">

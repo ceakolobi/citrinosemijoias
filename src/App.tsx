@@ -18,6 +18,7 @@ import { RingsView } from './components/ecommerce/RingsView';
 import { NecklacesView } from './components/ecommerce/NecklacesView';
 import { ResellerView } from './components/ecommerce/ResellerView';
 import { PerfumesView } from './components/ecommerce/PerfumesView';
+import { PiercingsView } from './components/ecommerce/PiercingsView';
 
 // Admin Components (Citrino ERP)
 import { AdminLayout, AdminModule } from './components/admin/AdminLayout';
@@ -285,6 +286,14 @@ export default function App() {
 
         {(currentView === 'revendedora' || currentView === 'reseller' || currentView === 'atacado') && (
           <ResellerView
+            onNavigate={handleNavigate}
+            onOpenProduct={handleOpenProduct}
+            onOpenCart={() => setIsCartOpen(true)}
+          />
+        )}
+
+        {currentView === 'piercings' && (
+          <PiercingsView
             onNavigate={handleNavigate}
             onOpenProduct={handleOpenProduct}
             onOpenCart={() => setIsCartOpen(true)}
