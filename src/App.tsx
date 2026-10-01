@@ -67,6 +67,7 @@ export default function App() {
     catalogError,
     logoutAdmin,
     loginAdmin,
+    currentCustomer,
   } = useCitrinoStore();
 
   // Primary Navigation State
@@ -244,14 +245,30 @@ export default function App() {
         )}
 
         {currentView === 'account' && (
-          <AccountView
-            initialTab={accountTab}
-            onNavigateTracking={(orderNumber) => {
-              setTrackingOrderNumber(orderNumber);
-              setCurrentView('tracking');
-            }}
-            onOpenProduct={handleOpenProduct}
-          />
+          currentCustomer ? (
+            <AccountView
+              initialTab={accountTab}
+              onNavigateTracking={(orderNumber) => {
+                setTrackingOrderNumber(orderNumber);
+                setCurrentView('tracking');
+              }}
+              onOpenProduct={handleOpenProduct}
+            />
+          ) : (
+            <div className='max-w-md mx-auto px-4 py-20 text-center'>
+              <div className='w-16 h-16 rounded-full bg-[#FAF8F4] border-2 border-[#C9A84C] flex items-center justify-center mx-auto mb-6'>
+                <span className='text-[#C9A84C] text-2xl'>✦</span>
+              </div>
+              <h2 className='text-2xl font-serif-luxury text-[#1C1C1C] mb-2'>Área do Cliente</h2>
+              <p className='text-sm text-[#777] mb-6'>Faça login ou cadastre-se para acessar seus pedidos e lista de desejos.</p>
+              <button
+                onClick={() => setCurrentView('catalog')}
+                className='bg-[#1C1C1C] hover:bg-[#C9A84C] text-white text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-lg transition'
+              >
+                Ver Coleção
+              </button>
+            </div>
+          )
         )}
 
         {currentView === 'tracking' && (

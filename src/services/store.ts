@@ -179,7 +179,7 @@ export function useCitrinoStore() {
   const [selectedShipping, setSelectedShipping] = useState<ShippingOption | null>(null);
   
   // Auth state
-  const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(() => getLocal(STORAGE_KEYS.CURRENT_USER, INITIAL_CUSTOMERS[0]));
+  const [currentCustomer, setCurrentCustomer] = useState<Customer | null>(() => getLocal(STORAGE_KEYS.CURRENT_USER, null));
   const [activeAdminRole, setActiveAdminRole] = useState<AdminRole>(() => getLocal(STORAGE_KEYS.ACTIVE_ROLE, 'admin'));
   const adminSession = useMemo<AdminUser | null>(
     () =>
