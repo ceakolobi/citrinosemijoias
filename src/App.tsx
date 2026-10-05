@@ -26,13 +26,15 @@ import { AdminLoginPage } from './components/admin/AdminLoginPage';
 import { AdminErrorBoundary } from './components/admin/AdminErrorBoundary';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminProducts } from './components/admin/AdminProducts';
-import { AdminOrders } from './components/admin/AdminOrders';
 import { AdminCustomers } from './components/admin/AdminCustomers';
 import { AdminFinancial } from './components/admin/AdminFinancial';
 import { AdminMarketing } from './components/admin/AdminMarketing';
 import { AdminReports } from './components/admin/AdminReports';
 import { AdminSettings } from './components/admin/AdminSettings';
 import { AdminContent } from './components/admin/AdminContent';
+import { AdminSales } from './components/admin/AdminSales';
+import { PaymentReturnView } from './components/ecommerce/PaymentReturnView';
+import { CertificateVerifyView } from './components/ecommerce/CertificateVerifyView';
 
 function SplashScreen({
   message,
@@ -71,11 +73,21 @@ export default function App() {
   } = useCitrinoStore();
 
   // Primary Navigation State
+  const initialPath = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
   const [currentView, setCurrentView] = useState<string>(() =>
-    typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '').startsWith('/admin')
+    initialPath.startsWith('/admin')
       ? 'admin'
-      : 'home'
+      : initialPath === '/pedido/retorno'
+        ? 'payment-return'
+        : initialPath.startsWith('/garantia')
+          ? 'certificate'
+          : 'home'
   );
+  const [certificateCode] = useState<string>(() => {
+    const m = initialPath.match(/^\/garantia\/([A-Za-z0-9-]{1,20})$/);
+    return m ? decodeURIComponent(m[1]).toUpperCase() : '';
+  });
+  const [verifyCode, setVerifyCode] = useState<string>(certificateCode);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [catalogCategory, setCatalogCategory] = useState<string>('all');
   const [catalogSearch, setCatalogSearch] = useState<string>('');
@@ -95,6 +107,11 @@ export default function App() {
     if (currentView === 'admin' && !onAdminPath) {
       window.history.replaceState(null, '', '/admin');
     } else if (currentView !== 'admin' && onAdminPath) {
+      window.history.replaceState(null, '', '/');
+    } else if (
+      !['payment-return', 'certificate', 'admin'].includes(currentView) &&
+      /^\/(pedido|garantia)/.test(window.location.pathname)
+    ) {
       window.history.replaceState(null, '', '/');
     }
   }, [currentView]);
@@ -172,7 +189,7 @@ export default function App() {
           )}
           {safeModule === 'products' && <AdminProducts />}
           {safeModule === 'content' && <AdminContent />}
-          {safeModule === 'orders' && <AdminOrders />}
+          {safeModule === 'orders' && <AdminSales />}
           {safeModule === 'customers' && <AdminCustomers />}
           {safeModule === 'financial' && <AdminFinancial />}
           {safeModule === 'marketing' && <AdminMarketing />}
@@ -233,6 +250,19 @@ export default function App() {
             onOpenCart={() => setIsCartOpen(true)}
           />
         )}
+
+        {currentView === 'payment-return' && (
+          <PaymentReturnView
+            onGoHome={() => setCurrentView('home')}
+            onVerify={(code) => {
+              setVerifyCode(code);
+              window.history.replaceState(null, '', `/garantia/${encodeURIComponent(code)}`);
+              setCurrentView('certificate');
+            }}
+          />
+        )}
+
+        {currentView === 'certificate' && <CertificateVerifyView initialCode={verifyCode} />}
 
         {currentView === 'checkout' && (
           <CheckoutView

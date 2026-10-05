@@ -63,7 +63,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   // Modules visible per role
   const ALL_NAV_ITEMS = [
     { id: 'dashboard',  label: 'Dashboard',              icon: LayoutDashboard, badge: null, roles: ['admin', 'financeiro', 'operador'] },
-    { id: 'orders',     label: 'Gestão de Pedidos',       icon: ShoppingCart,    badge: pendingOrdersCount > 0 ? pendingOrdersCount : null, roles: ['admin', 'financeiro', 'operador'] },
+    { id: 'orders',     label: 'Vendas & Garantias',      icon: ShoppingCart,    badge: null, roles: ['admin', 'financeiro', 'operador'] },
     { id: 'products',   label: 'Catálogo & Estoque',      icon: Package,         badge: lowStockCount > 0 ? `${lowStockCount} alertas` : null, badgeAlert: true, roles: ['admin', 'operador'] },
     { id: 'content',    label: 'Conteúdo do Site',        icon: FileText,        badge: null, roles: ['admin'] },
     { id: 'customers',  label: 'Clientes & B2B',          icon: Users,           badge: null, roles: ['admin'] },
