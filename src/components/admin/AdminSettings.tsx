@@ -32,12 +32,15 @@ export const AdminSettings: React.FC = () => {
   const [city, setCity] = useState(companySettings.city);
   const [state, setState] = useState(companySettings.state);
   const [freeShipping, setFreeShipping] = useState(companySettings.freeShippingThreshold);
+  const [ship, setShip] = useState({
+    pacPrice: companySettings.shippingPacPrice, pacDays: companySettings.shippingPacDays,
+    sedexPrice: companySettings.shippingSedexPrice, sedexDays: companySettings.shippingSedexDays, sedexOn: companySettings.shippingSedexOn !== false,
+    jadlogPrice: companySettings.shippingJadlogPrice, jadlogDays: companySettings.shippingJadlogDays, jadlogOn: companySettings.shippingJadlogOn !== false,
+  });
+  const setShipField = (k: keyof typeof ship, v: number | boolean) => setShip((prev) => ({ ...prev, [k]: v }));
   const [instagram, setInstagram] = useState(companySettings.instagram);
 
   // Payment credentials
-  const [mpPublicKey, setMpPublicKey] = useState('APP_USR-78291029-4820-41a2-b912-892182910283');
-  const [mpAccessToken, setMpAccessToken] = useState('APP_USR-••••••••••••••••••••••••••••••••');
-  const [resendApiKey, setResendApiKey] = useState('re_92a8B10293_••••••••••••');
 
   // Team users state
   const [teamMembers, setTeamMembers] = useState([
@@ -62,7 +65,15 @@ export const AdminSettings: React.FC = () => {
         city,
         state,
         instagram,
-        freeShippingThreshold: Number(freeShipping),
+        freeShippingThreshold: Math.max(0, Number(freeShipping) || 0),
+        shippingPacPrice: Math.max(0, Number(ship.pacPrice) || 0),
+        shippingPacDays: Math.max(1, Math.round(Number(ship.pacDays) || 1)),
+        shippingSedexPrice: Math.max(0, Number(ship.sedexPrice) || 0),
+        shippingSedexDays: Math.max(1, Math.round(Number(ship.sedexDays) || 1)),
+        shippingSedexOn: ship.sedexOn,
+        shippingJadlogPrice: Math.max(0, Number(ship.jadlogPrice) || 0),
+        shippingJadlogDays: Math.max(1, Math.round(Number(ship.jadlogDays) || 1)),
+        shippingJadlogOn: ship.jadlogOn,
       });
       if (res.ok === true) {
         setFeedback(true);
@@ -142,7 +153,7 @@ export const AdminSettings: React.FC = () => {
               : 'border-transparent text-gray-500 hover:text-gray-800'
           }`}
         >
-          Integrações (Mercado Pago & Resend)
+          Pagamento (InfinitePay)
         </button>
         <button
           onClick={() => setActiveTab('team')}
@@ -269,106 +280,87 @@ export const AdminSettings: React.FC = () => {
           <div className="space-y-1">
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
               <Truck className="w-5 h-5 text-[#E97527]" />
-              Políticas de Frete & Despacho
+              Frete do site
             </h3>
             <p className="text-gray-500">
-              Configure o valor mínimo para Frete Grátis e métodos de transporte padrão.
+              Esses valores aparecem no checkout e são os mesmos que o servidor cobra. Depois de mudar, clique em <strong>Salvar Alterações</strong> (no topo).
             </p>
           </div>
 
           <div className="p-4 bg-[#F8F9FA] rounded-xl border border-gray-200 space-y-3">
-            <label className="font-bold text-gray-800 uppercase tracking-wider text-[11px] block">
-              Gatilho de Frete Grátis na Sacola (R$)
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="number"
-                value={freeShipping}
-                onChange={(e) => setFreeShipping(Number(e.target.value))}
-                className="w-48 bg-white border border-gray-300 rounded p-2.5 font-bold text-sm focus:border-[#E97527] focus:outline-none"
-              />
+            <label className="font-bold text-gray-800 uppercase tracking-wider text-[11px] block">Frete grátis (PAC) a partir de (R$)</label>
+            <div className="flex flex-wrap items-center gap-3">
+              <input type="number" min={0} step="0.01" value={freeShipping} onChange={(e) => setFreeShipping(Number(e.target.value))}
+                className="w-40 bg-white border border-gray-300 rounded p-2.5 font-bold text-sm focus:border-[#E97527] focus:outline-none" />
               <span className="text-gray-500">
-                Pedidos com valor superior a R$ {freeShipping} recebem frete PAC sem custo para o cliente.
+                {Number(freeShipping) > 0 ? `Compras a partir de R$ ${Number(freeShipping).toFixed(2)} ganham PAC grátis.` : 'Com 0, não existe frete grátis.'}
               </span>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">
-              Transportadoras Ativas
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between">
-                <div>
-                  <strong className="block text-gray-900">Correios (PAC & SEDEX)</strong>
-                  <span className="text-[11px] text-gray-400">Contrato Sigep Web Ativo</span>
-                </div>
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              </div>
-
-              <div className="p-3 bg-white border border-gray-200 rounded-lg flex items-center justify-between">
-                <div>
-                  <strong className="block text-gray-900">Jadlog Express</strong>
-                  <span className="text-[11px] text-gray-400">Integração Melhor Envio</span>
-                </div>
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              </div>
+          <div className="space-y-2">
+            <h4 className="font-bold text-gray-800 uppercase tracking-wider text-[11px]">Formas de envio</h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead className="text-[11px] text-gray-500 uppercase">
+                  <tr><th className="text-left p-2">Envio</th><th className="text-left p-2">Ativo</th><th className="text-left p-2">Preço (R$)</th><th className="text-left p-2">Prazo (dias úteis)</th></tr>
+                </thead>
+                <tbody className="divide-y">
+                  {([
+                    ['Correios PAC', null, 'pacPrice', 'pacDays'],
+                    ['Correios SEDEX', 'sedexOn', 'sedexPrice', 'sedexDays'],
+                    ['Jadlog', 'jadlogOn', 'jadlogPrice', 'jadlogDays'],
+                  ] as const).map(([label, onKey, priceKey, daysKey]) => (
+                    <tr key={label}>
+                      <td className="p-2 font-semibold text-gray-800">{label}</td>
+                      <td className="p-2">
+                        {onKey ? (
+                          <input type="checkbox" checked={Boolean(ship[onKey])} onChange={(e) => setShipField(onKey, e.target.checked)} className="w-4 h-4 accent-[#E97527]" />
+                        ) : (
+                          <span className="text-gray-400">sempre</span>
+                        )}
+                      </td>
+                      <td className="p-2">
+                        <input type="number" min={0} max={500} step="0.01" value={Number(ship[priceKey])} onChange={(e) => setShipField(priceKey, Number(e.target.value))}
+                          className="w-28 border border-gray-300 rounded p-2 focus:border-[#E97527] focus:outline-none" />
+                      </td>
+                      <td className="p-2">
+                        <input type="number" min={1} max={60} step="1" value={Number(ship[daysKey])} onChange={(e) => setShipField(daysKey, Number(e.target.value))}
+                          className="w-20 border border-gray-300 rounded p-2 focus:border-[#E97527] focus:outline-none" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+            <p className="text-[11px] text-gray-400">Preço máximo R$ 500 e prazo máximo 60 dias. Valores fora disso voltam ao padrão.</p>
           </div>
         </div>
       )}
 
-      {/* TAB 3: PAYMENTS INTEGRATION */}
+      {/* TAB 3: PAYMENTS (InfinitePay) */}
       {activeTab === 'payments' && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 space-y-6 shadow-xs max-w-3xl text-xs">
+        <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 space-y-5 shadow-xs max-w-3xl text-xs">
           <div className="space-y-1">
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-[#E97527]" />
-              Credenciais da API Mercado Pago (Brasil)
+              Pagamento pela InfinitePay
             </h3>
-            <p className="text-gray-500">
-              Configurações para processamento seguro de PIX com QR code dinâmico e Cartão de Crédito.
-            </p>
+            <p className="text-gray-500">O cliente paga por PIX ou cartão na página oficial da InfinitePay. O dinheiro cai direto na sua conta.</p>
           </div>
-
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-[11px] flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>
-              <strong>Atenção à Segurança:</strong> As chaves de produção ficam protegidas no backend via variáveis de ambiente e Edge Functions do Supabase.
-            </span>
+          <div className="p-4 bg-[#F8F9FA] rounded-xl border border-gray-200 space-y-1">
+            <p className="text-gray-500">Conta que recebe</p>
+            <p className="text-sm font-bold text-gray-900">$maria-daniel-4xs</p>
           </div>
-
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <label className="font-semibold text-gray-700">Public Key (Mercado Pago):</label>
-              <input
-                type="text"
-                value={mpPublicKey}
-                onChange={(e) => setMpPublicKey(e.target.value)}
-                className="w-full bg-[#F4F5F7] border border-gray-200 rounded p-2.5 font-mono text-gray-700 focus:outline-none focus:border-[#E97527]"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="font-semibold text-gray-700">Access Token (Produção):</label>
-              <input
-                type="password"
-                value={mpAccessToken}
-                onChange={(e) => setMpAccessToken(e.target.value)}
-                className="w-full bg-[#F4F5F7] border border-gray-200 rounded p-2.5 font-mono text-gray-700 focus:outline-none focus:border-[#E97527]"
-              />
-            </div>
-
-            <div className="space-y-1 pt-2 border-t border-gray-100">
-              <label className="font-semibold text-gray-700">Resend API Key (Notificações de E-mail):</label>
-              <input
-                type="password"
-                value={resendApiKey}
-                onChange={(e) => setResendApiKey(e.target.value)}
-                className="w-full bg-[#F4F5F7] border border-gray-200 rounded p-2.5 font-mono text-gray-700 focus:outline-none focus:border-[#E97527]"
-              />
-            </div>
+          <div className="space-y-2">
+            <p className="font-bold text-gray-800">Para o site conseguir cobrar, o Checkout Integrado precisa estar ativado:</p>
+            <ol className="list-decimal pl-5 space-y-1 text-gray-600">
+              <li>Entre em <a href="https://app.infinitepay.io" target="_blank" rel="noopener noreferrer" className="text-[#E97527] underline">app.infinitepay.io</a> com o login do app.</li>
+              <li>Abra <strong>Checkout externo</strong> (ou Checkout Integrado / Link Integrado).</li>
+              <li>Em <strong>Configurações</strong>, deixe <strong>ativado</strong> e salve.</li>
+            </ol>
           </div>
+          <p className="flex items-start gap-2 text-gray-500"><ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" /> Nenhuma senha ou chave da InfinitePay fica guardada no site. O pagamento só é marcado como pago depois que o sistema confere direto com a InfinitePay.</p>
         </div>
       )}
 

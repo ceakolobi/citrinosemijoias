@@ -39,8 +39,9 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ onBackToCatalog }) =
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const freeFrom = Number(companySettings?.freeShippingThreshold) || 299;
-  const options = useMemo(() => SHIPPING_OPTIONS(cartSubtotal, freeFrom), [cartSubtotal, freeFrom]);
+  const freeRaw = Number(companySettings?.freeShippingThreshold);
+  const freeFrom = Number.isFinite(freeRaw) && freeRaw >= 0 ? freeRaw : 299;
+  const options = useMemo(() => SHIPPING_OPTIONS(cartSubtotal, companySettings as any), [cartSubtotal, companySettings]);
   const shipping = options.find((o) => o.id === shippingId) || options[0];
   const total = cartSubtotal + shipping.price;
   const cepOk = address.cep.replace(/\D/g, '').length === 8;
@@ -199,7 +200,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({ onBackToCatalog }) =
                   <span className="font-semibold">{o.price === 0 ? <span className="text-emerald-700">Grátis</span> : formatBRL(o.price)}</span>
                 </label>
               ))}
-              {cartSubtotal < freeFrom && (
+              {freeFrom > 0 && cartSubtotal < freeFrom && (
                 <p className="text-[11px] text-[#888]">Frete grátis (PAC) acima de {formatBRL(freeFrom)}.</p>
               )}
             </div>

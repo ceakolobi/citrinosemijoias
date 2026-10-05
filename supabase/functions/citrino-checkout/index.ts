@@ -66,13 +66,22 @@ function orderNsu() {
   return `CIT${ymd}-${tail}`;
 }
 
-const SHIPPING = (subtotalCents: number, freeFromCents: number) => {
-  const free = subtotalCents >= freeFromCents;
-  return {
-    pac: { id: 'pac', name: 'Correios PAC', cents: free ? 0 : 2290, days: 5 },
-    sedex: { id: 'sedex', name: 'Correios SEDEX Express', cents: free ? 1200 : 3450, days: 2 },
-    jadlog: { id: 'jadlog', name: 'Jadlog Package', cents: 1990, days: 4 },
-  } as Record<string, { id: string; name: string; cents: number; days: number }>;
+// Valores configurados pela loja em Configurações → Frete (citrino_docs content/company).
+// Validados aqui: valor fora da faixa volta ao padrão.
+const num = (v: any, def: number, min: number, max: number) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= min && n <= max ? n : def;
+};
+const SHIPPING = (subtotalCents: number, cs: Record<string, any> = {}) => {
+  const freeFromCents = Math.round(num(cs.freeShippingThreshold, 299, 0, 100000) * 100);
+  const free = freeFromCents > 0 && subtotalCents >= freeFromCents;
+  const cents = (v: any, def: number) => Math.round(num(v, def, 0, 500) * 100);
+  const out: Record<string, { id: string; name: string; cents: number; days: number }> = {
+    pac: { id: 'pac', name: 'Correios PAC', cents: free ? 0 : cents(cs.shippingPacPrice, 22.9), days: num(cs.shippingPacDays, 5, 1, 60) },
+  };
+  if (cs.shippingSedexOn !== false) out.sedex = { id: 'sedex', name: 'Correios SEDEX', cents: cents(cs.shippingSedexPrice, 34.5), days: num(cs.shippingSedexDays, 2, 1, 60) };
+  if (cs.shippingJadlogOn !== false) out.jadlog = { id: 'jadlog', name: 'Jadlog', cents: cents(cs.shippingJadlogPrice, 19.9), days: num(cs.shippingJadlogDays, 4, 1, 60) };
+  return out;
 };
 
 Deno.serve(async (req) => {
@@ -182,8 +191,7 @@ Deno.serve(async (req) => {
     const subtotal = items.reduce((s: number, it: any) => s + it.unit_cents * it.quantity, 0);
     const { data: company } = await supabase
       .from('citrino_docs').select('data').eq('collection', 'content').eq('id', 'company').maybeSingle();
-    const freeFrom = Math.round(Number(company?.data?.freeShippingThreshold || 299) * 100);
-    const ship = SHIPPING(subtotal, freeFrom)[shippingId];
+    const ship = SHIPPING(subtotal, company?.data || {})[shippingId];
     if (!ship) throw new Bad('Escolha uma forma de envio.');
     const total = subtotal + ship.cents;
 

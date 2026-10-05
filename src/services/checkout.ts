@@ -3,13 +3,20 @@
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './supabaseClient';
 import type { CartItem, ShippingAddress } from '../types';
 
-export const SHIPPING_OPTIONS = (subtotal: number, freeFrom: number) => {
-  const free = subtotal >= freeFrom;
-  return [
-    { id: 'pac', name: 'Correios PAC', price: free ? 0 : 22.9, days: 5, free },
-    { id: 'sedex', name: 'Correios SEDEX Express', price: free ? 12 : 34.5, days: 2, free: false },
-    { id: 'jadlog', name: 'Jadlog Package', price: 19.9, days: 4, free: false },
+// Mesmas regras do servidor (citrino-checkout). Valores vêm de Configurações → Frete no painel.
+const num = (v: any, def: number, min: number, max: number) => {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= min && n <= max ? n : def;
+};
+export const SHIPPING_OPTIONS = (subtotal: number, cs: Record<string, any> = {}) => {
+  const freeFrom = num(cs.freeShippingThreshold, 299, 0, 100000);
+  const free = freeFrom > 0 && subtotal >= freeFrom;
+  const list = [
+    { id: 'pac', name: 'Correios PAC', price: free ? 0 : num(cs.shippingPacPrice, 22.9, 0, 500), days: num(cs.shippingPacDays, 5, 1, 60), free, on: true },
+    { id: 'sedex', name: 'Correios SEDEX', price: num(cs.shippingSedexPrice, 34.5, 0, 500), days: num(cs.shippingSedexDays, 2, 1, 60), free: false, on: cs.shippingSedexOn !== false },
+    { id: 'jadlog', name: 'Jadlog', price: num(cs.shippingJadlogPrice, 19.9, 0, 500), days: num(cs.shippingJadlogDays, 4, 1, 60), free: false, on: cs.shippingJadlogOn !== false },
   ];
+  return list.filter((o) => o.on);
 };
 
 async function callFunction<T>(name: string, body: unknown): Promise<T> {

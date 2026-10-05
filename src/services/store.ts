@@ -79,6 +79,14 @@ export interface CompanySettings {
   cep: string;
   instagram: string;
   freeShippingThreshold: number;
+  shippingPacPrice: number;
+  shippingPacDays: number;
+  shippingSedexPrice: number;
+  shippingSedexDays: number;
+  shippingSedexOn: boolean;
+  shippingJadlogPrice: number;
+  shippingJadlogDays: number;
+  shippingJadlogOn: boolean;
   mpPublicKey: string;
   mpAccessToken: string;
   pixKey: string;
@@ -98,6 +106,14 @@ const DEFAULT_COMPANY_SETTINGS: CompanySettings = {
   cep: '01426-000',
   instagram: '@citrinosemijoias',
   freeShippingThreshold: 299.00,
+  shippingPacPrice: 22.9,
+  shippingPacDays: 5,
+  shippingSedexPrice: 34.5,
+  shippingSedexDays: 2,
+  shippingSedexOn: true,
+  shippingJadlogPrice: 19.9,
+  shippingJadlogDays: 4,
+  shippingJadlogOn: true,
   mpPublicKey: 'APP_USR-7819-test-citrino-public',
   mpAccessToken: 'APP_USR-7819-test-citrino-access-token',
   pixKey: 'pix@citrinosemijoias.com.br',
@@ -567,6 +583,8 @@ export function useCitrinoStore() {
   const PUBLIC_COMPANY_KEYS: (keyof CompanySettings)[] = [
     'name', 'tradingName', 'cnpj', 'stateRegistration', 'phone', 'whatsapp', 'email',
     'address', 'city', 'state', 'cep', 'instagram', 'freeShippingThreshold',
+    'shippingPacPrice', 'shippingPacDays', 'shippingSedexPrice', 'shippingSedexDays', 'shippingSedexOn',
+    'shippingJadlogPrice', 'shippingJadlogDays', 'shippingJadlogOn',
   ];
   const updateCompanySettings = (partial: Partial<CompanySettings>): Promise<Result> => {
     const merged: Record<string, any> = { ...companySettings, ...partial };
