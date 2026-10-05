@@ -216,4 +216,6 @@ language sql stable security definer set search_path = public as $$
 $$;
 revoke all on function public.citrino_verificar_certificado(text) from public;
 grant execute on function public.citrino_verificar_certificado(text) to anon, authenticated;
-revoke all on function public.citrino_new_cert_code() from public, anon, authenticated;
+revoke all on function public.citrino_new_cert_code() from public, anon;
+-- usado no INSERT feito pelo painel (usuário logado) e pela função de pagamento
+grant execute on function public.citrino_new_cert_code() to authenticated, service_role;
