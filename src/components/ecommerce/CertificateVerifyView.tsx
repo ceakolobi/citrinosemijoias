@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, ShieldAlert, ShieldX, Loader2, Search } from 'lucide-react';
-import { verifyCertificate, PublicCertificate, CERT_CODE_RE, formatDateBR } from '../../services/checkout';
+import { verifyCertificate, PublicCertificate, CERT_CODE_RE, formatDateBR, formatBRL } from '../../services/checkout';
 
-// Página pública de verificação: mostra só o primeiro nome + inicial, as peças e a validade.
+// Página pública de verificação: mostra só o primeiro nome + inicial, as peças (com foto e preço) e a validade.
 export const CertificateVerifyView: React.FC<{ initialCode?: string }> = ({ initialCode = '' }) => {
   const [code, setCode] = useState(initialCode.toUpperCase());
   const [state, setState] = useState<'idle' | 'loading' | 'found' | 'notfound' | 'error'>('idle');
@@ -75,7 +75,32 @@ export const CertificateVerifyView: React.FC<{ initialCode?: string }> = ({ init
           <dl className="text-sm divide-y divide-[#F2ECE1]">
             <div className="flex justify-between py-2"><dt className="text-[#777]">Código</dt><dd className="font-mono font-bold">{cert.code}</dd></div>
             <div className="flex justify-between py-2"><dt className="text-[#777]">Cliente</dt><dd>{cert.cliente}</dd></div>
-            <div className="flex justify-between gap-4 py-2"><dt className="text-[#777]">Peça(s)</dt><dd className="text-right">{cert.itens.join(', ')}</dd></div>
+            <div className="py-2 space-y-3">
+              <dt className="text-[#777]">Peça(s)</dt>
+              {cert.pecas && cert.pecas.length > 0 ? (
+                <dd className="space-y-3">
+                  {cert.pecas.map((p, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      {/^https:\/\//i.test(p.image || '') ? (
+                        <img src={p.image as string} alt={p.name} loading="lazy" className="w-20 h-20 rounded-lg object-cover border border-[#E8E4DC] bg-white flex-none" />
+                      ) : (
+                        <div className="w-20 h-20 rounded-lg bg-[#F2ECE1] flex-none" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-medium text-[#1C1C1C]">{p.quantity > 1 ? `${p.quantity}× ` : ''}{p.name}{p.variation ? <span className="text-[#777] font-normal"> ({p.variation})</span> : null}</p>
+                        {typeof p.unit_cents === 'number' && p.unit_cents > 0 && (
+                          <p className="text-[#8A6D1D] font-bold">
+                            {p.quantity > 1 ? `${p.quantity} × ${formatBRL(p.unit_cents / 100)} = ${formatBRL((p.unit_cents * p.quantity) / 100)}` : formatBRL(p.unit_cents / 100)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </dd>
+              ) : (
+                <dd>{cert.itens.join(', ')}</dd>
+              )}
+            </div>
             <div className="flex justify-between py-2"><dt className="text-[#777]">Data da compra</dt><dd>{formatDateBR(cert.data_compra)}</dd></div>
             <div className="flex justify-between py-2"><dt className="text-[#777]">Garantia</dt><dd>{cert.garantia}</dd></div>
             <div className="flex justify-between py-2"><dt className="text-[#777]">Válida até</dt><dd className="font-semibold">{formatDateBR(cert.valido_ate)}</dd></div>

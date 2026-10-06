@@ -80,6 +80,15 @@ export interface PublicCertificate {
   data_compra: string;
   valido_ate: string;
   situacao: 'valido' | 'expirado' | 'cancelado';
+  pecas?: PublicPiece[];
+}
+
+export interface PublicPiece {
+  name: string;
+  variation?: string | null;
+  quantity: number;
+  image?: string | null;
+  unit_cents?: number | null;
 }
 
 export const CERT_CODE_RE = /^CIT-[2-9A-HJ-NP-Z]{5}-[2-9A-HJ-NP-Z]{5}$/;
@@ -90,7 +99,14 @@ export async function verifyCertificate(code: string): Promise<PublicCertificate
   const { data, error } = await supabase.rpc('citrino_verificar_certificado', { p_code: clean });
   if (error) throw new Error('Não foi possível consultar agora. Tente de novo.');
   const row = Array.isArray(data) ? data[0] : data;
-  return (row as PublicCertificate) || null;
+  if (!row) return null;
+  // Foto e preço das peças (se falhar, a página continua mostrando só os nomes)
+  let pecas: PublicPiece[] | undefined;
+  try {
+    const r = await supabase.rpc('citrino_certificado_pecas', { p_code: clean });
+    if (!r.error && Array.isArray(r.data)) pecas = r.data as PublicPiece[];
+  } catch { /* segue sem fotos */ }
+  return { ...(row as PublicCertificate), pecas };
 }
 
 export const certificateUrl = (code: string) =>
