@@ -18,7 +18,7 @@ type Pedido = {
 };
 type Cert = {
   id: string; code: string; pedido_id: string | null; customer_name: string; customer_phone: string | null;
-  order_ref: string | null; items: { name: string; variation?: string | null; quantity?: number }[];
+  order_ref: string | null; items: { name: string; sku?: string | null; variation?: string | null; quantity?: number; image?: string | null; unit_cents?: number | null }[];
   warranty: string; purchase_date: string; valid_until: string; revoked: boolean; notes: string | null; created_at: string;
 };
 
@@ -41,9 +41,34 @@ const certMessage = (c: Cert) =>
   `Olá, ${c.customer_name.split(' ')[0]}! Aqui está o seu certificado de garantia Citrino Semijoias ✨\n\n` +
   `Código: ${c.code}\nGarantia: ${c.warranty} (válida até ${formatDateBR(c.valid_until)})\n\n` +
   `Confira a autenticidade aqui: ${certificateUrl(c.code)}\n\nGuarde este código para acionar a garantia. 💛`;
-const printCert = (c: Cert) =>
+// Completa foto e preço de cada peça: 1º o que o certificado guardou; 2º o item do pedido (preço pago); 3º o catálogo.
+const norm = (v: unknown) => String(v ?? '').trim().toLowerCase();
+const imgOk = (u: unknown) => (typeof u === 'string' && /^(https:\/\/|\/[^/]|data:image\/)/i.test(u) ? u : null);
+const enrichItems = (c: Cert, pedidos: Pedido[], products: any[]) => {
+  const ped = c.pedido_id ? pedidos.find((p) => p.id === c.pedido_id) : undefined;
+  return c.items.map((it) => {
+    let image = imgOk(it.image);
+    let cents = typeof it.unit_cents === 'number' && it.unit_cents > 0 ? it.unit_cents : null;
+    const pit: any = ped?.items.find((x: any) => (it.sku && x.sku === it.sku && norm(x.variation) === norm(it.variation)) || (norm(x.name) === norm(it.name) && norm(x.variation) === norm(it.variation)));
+    if (pit) {
+      image = image || imgOk(pit.image);
+      cents = cents ?? (pit.unit_cents > 0 ? pit.unit_cents : null);
+    }
+    const prod = (pit?.productId && products.find((p) => p.id === pit.productId)) ||
+      products.find((p) => (it.sku && p.sku === it.sku) || norm(p.name) === norm(it.name));
+    if (prod) {
+      image = image || imgOk(Array.isArray(prod.images) ? prod.images[0] : null);
+      if (cents === null) {
+        const v = Number(prod.promoPrice) > 0 ? Number(prod.promoPrice) : Number(prod.price);
+        cents = v > 0 ? Math.round(v * 100) : null;
+      }
+    }
+    return { ...it, image, unit_cents: cents };
+  });
+};
+const printCert = (c: Cert, pedidos: Pedido[], products: any[]) =>
   openCertificate({
-    code: c.code, customerName: c.customer_name, items: c.items, warranty: c.warranty,
+    code: c.code, customerName: c.customer_name, items: enrichItems(c, pedidos, products), warranty: c.warranty,
     purchaseDate: c.purchase_date, validUntil: c.valid_until, orderRef: c.order_ref, revoked: c.revoked,
   });
 
@@ -205,7 +230,7 @@ export const AdminSales: React.FC = () => {
                       {pc.length > 0 && (
                         <div className="flex flex-wrap gap-2 pt-1">
                           {pc.map((c) => (
-                            <button key={c.id} onClick={() => printCert(c)} className="text-xs px-3 py-1.5 rounded bg-[#1C1C1C] text-white flex items-center gap-1">
+                            <button key={c.id} onClick={() => printCert(c, pedidos, allProducts || [])} className="text-xs px-3 py-1.5 rounded bg-[#1C1C1C] text-white flex items-center gap-1">
                               <Printer className="w-3.5 h-3.5" /> Certificado {c.warranty}
                             </button>
                           ))}
@@ -241,7 +266,7 @@ export const AdminSales: React.FC = () => {
                     <td className={`p-3 ${expired ? 'text-amber-600' : ''}`}>{formatDateBR(c.valid_until)}</td>
                     <td className="p-3">
                       <div className="flex justify-end gap-1.5">
-                        <button title="Imprimir / PDF" onClick={() => printCert(c)} className="p-2 rounded border hover:bg-gray-50"><Printer className="w-4 h-4" /></button>
+                        <button title="Imprimir / PDF" onClick={() => printCert(c, pedidos, allProducts || [])} className="p-2 rounded border hover:bg-gray-50"><Printer className="w-4 h-4" /></button>
                         {wa && !c.revoked && (
                           <a title="Enviar no WhatsApp do cliente" href={wa} target="_blank" rel="noopener noreferrer" className="p-2 rounded border hover:bg-emerald-50 text-emerald-700"><Send className="w-4 h-4" /></a>
                         )}
@@ -271,7 +296,7 @@ const NewCertificateModal: React.FC<{ products: any[]; onClose: () => void; onSa
   const [date, setDate] = useState(today());
   const [warranty, setWarranty] = useState<'6 meses' | '1 ano'>('6 meses');
   const [orderRef, setOrderRef] = useState('');
-  const [items, setItems] = useState<{ name: string; quantity: number }[]>([]);
+  const [items, setItems] = useState<{ name: string; quantity: number; sku?: string; image?: string; unit_cents?: number }[]>([]);
   const [pick, setPick] = useState('');
   const [custom, setCustom] = useState('');
   const [saving, setSaving] = useState(false);
@@ -283,10 +308,17 @@ const NewCertificateModal: React.FC<{ products: any[]; onClose: () => void; onSa
     return products.filter((p) => `${p.name} ${p.sku}`.toLowerCase().includes(s)).slice(0, 8);
   }, [pick, products]);
 
-  const add = (n: string) => {
+  const add = (n: string, prod?: any) => {
     const v = n.trim().slice(0, 120);
     if (!v || items.length >= 30) return;
-    setItems((prev) => [...prev, { name: v, quantity: 1 }]);
+    const reais = prod ? (Number(prod.promoPrice) > 0 ? Number(prod.promoPrice) : Number(prod.price)) : 0;
+    const img = prod && Array.isArray(prod.images) ? String(prod.images[0] || '') : '';
+    setItems((prev) => [...prev, {
+      name: v, quantity: 1,
+      ...(prod?.sku ? { sku: String(prod.sku).slice(0, 40) } : {}),
+      ...(/^https:\/\//i.test(img) && img.length <= 500 ? { image: img } : {}),
+      ...(reais > 0 ? { unit_cents: Math.round(reais * 100) } : {}),
+    }]);
     setPick('');
     setCustom('');
   };
@@ -348,7 +380,7 @@ const NewCertificateModal: React.FC<{ products: any[]; onClose: () => void; onSa
               {matches.length > 0 && (
                 <div className="absolute z-10 left-0 right-0 bg-white border rounded-lg shadow mt-1 max-h-48 overflow-y-auto">
                   {matches.map((p) => (
-                    <button key={p.id} onClick={() => add(p.name)} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50">{p.name} <span className="text-gray-400">{p.sku}</span></button>
+                    <button key={p.id} onClick={() => add(p.name, p)} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50">{p.name} <span className="text-gray-400">{p.sku}</span></button>
                   ))}
                 </div>
               )}
@@ -363,6 +395,18 @@ const NewCertificateModal: React.FC<{ products: any[]; onClose: () => void; onSa
                   <li key={i} className="flex items-center gap-2 text-xs bg-gray-50 rounded px-2 py-1">
                     <input type="number" min={1} max={20} value={it.quantity} onChange={(e) => setItems(items.map((x, k) => (k === i ? { ...x, quantity: Math.max(1, Math.min(20, Number(e.target.value) || 1)) } : x)))} className="w-12 border rounded px-1" />
                     <span className="flex-1">{it.name}</span>
+                    <label className="flex items-center gap-1 text-gray-500">R$
+                      <input
+                        inputMode="decimal"
+                        placeholder="preço"
+                        value={it.unit_cents ? (it.unit_cents / 100).toFixed(2).replace('.', ',') : ''}
+                        onChange={(e) => {
+                          const n = Number(e.target.value.replace(/[^\d,]/g, '').replace(',', '.'));
+                          setItems(items.map((x, k) => (k === i ? { ...x, unit_cents: n > 0 && n < 100000 ? Math.round(n * 100) : undefined } : x)));
+                        }}
+                        className="w-20 border rounded px-1"
+                      />
+                    </label>
                     <button onClick={() => setItems(items.filter((_, k) => k !== i))}><X className="w-3.5 h-3.5 text-gray-400" /></button>
                   </li>
                 ))}
