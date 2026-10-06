@@ -42,7 +42,7 @@ const certMessage = (c: Cert) =>
   `Código: ${c.code}\nGarantia: ${c.warranty} (válida até ${formatDateBR(c.valid_until)})\n\n` +
   `Confira a autenticidade aqui: ${certificateUrl(c.code)}\n\nGuarde este código para acionar a garantia. 💛`;
 // Completa foto e preço de cada peça: 1º o que o certificado guardou; 2º o item do pedido (preço pago); 3º o catálogo.
-const norm = (v: unknown) => String(v ?? '').trim().toLowerCase();
+const norm = (v: unknown) => String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 const imgOk = (u: unknown) => (typeof u === 'string' && /^(https:\/\/|\/[^/]|data:image\/)/i.test(u) ? u : null);
 const enrichItems = (c: Cert, pedidos: Pedido[], products: any[]) => {
   const ped = c.pedido_id ? pedidos.find((p) => p.id === c.pedido_id) : undefined;
