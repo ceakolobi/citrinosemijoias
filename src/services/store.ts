@@ -126,7 +126,7 @@ export function useCitrinoStore() {
   // Loja pública só enxerga produtos ativos; o painel usa allProducts (inclui inativos e preço de custo).
   const allProducts = remote.products;
   const products = useMemo(
-    () => remote.products.filter((p) => p.active !== false),
+    () => remote.products.filter((p) => p.active !== false && Number(p.stock) > 0),
     [remote.products]
   );
   const banners = remote.banners;
@@ -134,7 +134,7 @@ export function useCitrinoStore() {
     () => {
       const mapped = remote.categories.map((c) => ({
         ...c,
-        itemCount: remote.products.filter((p) => p.active !== false && p.category === c.name).length,
+        itemCount: remote.products.filter((p) => p.active !== false && Number(p.stock) > 0 && p.category === c.name).length,
       }));
       // Garante que "Perfumes" sempre aparece (nova linha de produtos)
       if (!mapped.some((c) => c.name === 'Perfumes')) {
@@ -144,7 +144,7 @@ export function useCitrinoStore() {
           slug: 'perfumes',
           icon: 'Wind',
           image: 'https://images.unsplash.com/photo-1541643600914-78b084683702?q=80&w=800&auto=format&fit=crop',
-          itemCount: remote.products.filter((p) => p.active !== false && p.category === 'Perfumes').length,
+          itemCount: remote.products.filter((p) => p.active !== false && Number(p.stock) > 0 && p.category === 'Perfumes').length,
         });
       }
       // Idem para "Piercings"
@@ -155,7 +155,7 @@ export function useCitrinoStore() {
           slug: 'piercings',
           icon: 'Sparkles',
           image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800&auto=format&fit=crop',
-          itemCount: remote.products.filter((p) => p.active !== false && p.category === 'Piercings').length,
+          itemCount: remote.products.filter((p) => p.active !== false && Number(p.stock) > 0 && p.category === 'Piercings').length,
         });
       }
       return mapped;
