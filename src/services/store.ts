@@ -78,6 +78,8 @@ export interface CompanySettings {
   state: string;
   cep: string;
   instagram: string;
+  /** Logo enviada pelo painel (Configuracoes). Vazio = logo padrao do site. */
+  logoUrl: string;
   freeShippingThreshold: number;
   shippingPacPrice: number;
   shippingPacDays: number;
@@ -105,6 +107,7 @@ const DEFAULT_COMPANY_SETTINGS: CompanySettings = {
   state: 'SP',
   cep: '01426-000',
   instagram: '@citrinosemijoias',
+  logoUrl: '',
   freeShippingThreshold: 299.00,
   shippingPacPrice: 22.9,
   shippingPacDays: 5,
@@ -584,7 +587,7 @@ export function useCitrinoStore() {
     'name', 'tradingName', 'cnpj', 'stateRegistration', 'phone', 'whatsapp', 'email',
     'address', 'city', 'state', 'cep', 'instagram', 'freeShippingThreshold',
     'shippingPacPrice', 'shippingPacDays', 'shippingSedexPrice', 'shippingSedexDays', 'shippingSedexOn',
-    'shippingJadlogPrice', 'shippingJadlogDays', 'shippingJadlogOn',
+    'shippingJadlogPrice', 'shippingJadlogDays', 'shippingJadlogOn', 'logoUrl',
   ];
   const updateCompanySettings = (partial: Partial<CompanySettings>): Promise<Result> => {
     const merged: Record<string, any> = { ...companySettings, ...partial };

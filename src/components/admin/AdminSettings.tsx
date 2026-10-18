@@ -12,6 +12,7 @@ import {
   AlertTriangle 
 } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
+import { ImageUploader } from './ImageUploader';
 
 export const AdminSettings: React.FC = () => {
   const { companySettings, updateCompanySettings } = useCitrinoStore();
@@ -39,6 +40,7 @@ export const AdminSettings: React.FC = () => {
   });
   const setShipField = (k: keyof typeof ship, v: number | boolean) => setShip((prev) => ({ ...prev, [k]: v }));
   const [instagram, setInstagram] = useState(companySettings.instagram);
+  const [logoUrl, setLogoUrl] = useState(companySettings.logoUrl || '');
 
   // Payment credentials
 
@@ -65,6 +67,7 @@ export const AdminSettings: React.FC = () => {
         city,
         state,
         instagram,
+        logoUrl,
         freeShippingThreshold: Math.max(0, Number(freeShipping) || 0),
         shippingPacPrice: Math.max(0, Number(ship.pacPrice) || 0),
         shippingPacDays: Math.max(1, Math.round(Number(ship.pacDays) || 1)),
@@ -170,6 +173,40 @@ export const AdminSettings: React.FC = () => {
       {/* TAB 1: COMPANY INFO */}
       {activeTab === 'company' && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 sm:p-8 space-y-6 shadow-xs max-w-3xl text-xs">
+          <div className="space-y-3 pb-6 border-b border-gray-100">
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-gray-900">Logo da loja</h3>
+              <p className="text-gray-500">
+                Aparece no topo e no rodapé do site. Use de preferência PNG com fundo transparente, na horizontal. Depois de enviar, clique em <strong>Salvar Alterações</strong>.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 items-start">
+              <div className="w-full sm:w-72">
+                <ImageUploader
+                  value={logoUrl ? [logoUrl] : []}
+                  onChange={(urls) => setLogoUrl(urls[0] || '')}
+                  folder="site"
+                  max={1}
+                  maxSide={900}
+                  keepTransparency
+                  label="Enviar logo"
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <p className="font-semibold text-gray-700">Prévia no topo do site</p>
+                <div className="h-20 bg-white border border-gray-200 rounded-lg flex items-center justify-center px-4">
+                  {logoUrl
+                    ? <img src={logoUrl} alt="Prévia da logo" className="max-h-14 w-auto max-w-full object-contain" />
+                    : <span className="text-gray-400">Sem logo enviada: o site usa a logo padrão.</span>}
+                </div>
+                {logoUrl && (
+                  <button type="button" onClick={() => setLogoUrl('')} className="text-[11px] text-gray-500 underline hover:text-red-600">
+                    Voltar para a logo padrão
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
           <div className="space-y-1">
             <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
               <Building2 className="w-5 h-5 text-[#E97527]" />

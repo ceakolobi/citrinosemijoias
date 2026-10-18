@@ -2,8 +2,7 @@ import React from 'react';
 import { 
   ShieldCheck, 
   Sparkles, 
-  Truck, 
-  RotateCcw, 
+  Truck,  
   CreditCard, 
   QrCode, 
   Instagram, 
@@ -29,7 +28,7 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
     <footer className="bg-[#161616] text-[#FAF8F4] border-t border-[#2A2A2A] pt-16 pb-12">
       {/* Guarantees Strip */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 border-b border-[#2A2A2A]">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-8">
           <div className="flex items-start gap-4">
             <div className="p-3 bg-[#242424] rounded-full text-[#C9A84C]">
               <Sparkles className="w-6 h-6" />
@@ -65,18 +64,6 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
               </p>
             </div>
           </div>
-
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-[#242424] rounded-full text-[#C9A84C]">
-              <RotateCcw className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-serif-luxury text-lg text-white font-medium">{t('footer.strip4.title')}</h4>
-              <p className="text-xs text-[#9E9B97] mt-1 leading-relaxed">
-                {t('footer.strip4.text')}
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -85,6 +72,11 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand Info with Official Logo */}
           <div className="lg:col-span-2 space-y-4">
+            {companySettings.logoUrl ? (
+              <div className="inline-flex bg-[#FAF8F4] rounded-xl px-4 py-3">
+                <img src={companySettings.logoUrl} alt="Logo Citrino Semijoias" className="h-14 w-auto max-w-[240px] object-contain" />
+              </div>
+            ) : (
             <div className="flex items-center gap-3.5">
               <img
                 src="/citrino-icon.jpg"
@@ -101,6 +93,7 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
                 </p>
               </div>
             </div>
+            )}
             <p className="text-xs text-[#A8A49E] leading-relaxed max-w-sm">
               {t('footer.about')}
             </p>

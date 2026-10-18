@@ -5,8 +5,7 @@ import {
   ShoppingBag, 
   ShieldCheck, 
   Sparkles, 
-  Truck, 
-  RotateCcw, 
+  Truck,  
   Star, 
   Check,
   CreditCard,
@@ -428,14 +427,10 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({
           </div>
 
           {/* Trust Guarantees */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-1 gap-3 pt-2">
             <div className="flex items-center gap-2 text-xs text-[#444] p-2.5 bg-[#FAF8F4] rounded-lg">
               <ShieldCheck className="w-4 h-4 text-[#C9A84C] shrink-0" />
               <span>Garantia oficial (6 meses a 1 ano)</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-[#444] p-2.5 bg-[#FAF8F4] rounded-lg">
-              <RotateCcw className="w-4 h-4 text-[#C9A84C] shrink-0" />
-              <span>7 dias para troca grátis</span>
             </div>
           </div>
         </div>

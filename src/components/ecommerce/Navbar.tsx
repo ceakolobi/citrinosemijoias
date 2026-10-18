@@ -28,7 +28,7 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
   onOpenCart,
   onSwitchToAdmin,
 }) => {
-  const { cart, wishlist, currentCustomer, categories } = useCitrinoStore();
+  const { cart, wishlist, currentCustomer, categories, companySettings } = useCitrinoStore();
   const t = useSiteText();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -157,6 +157,9 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
             className="flex-1 md:flex-initial flex items-center justify-center gap-2.5 sm:gap-3.5 cursor-pointer group py-1" 
             onClick={() => onNavigate('home')}
           >
+            {companySettings.logoUrl ? (
+              <img src={companySettings.logoUrl} alt="Logo Citrino Semijoias" className="h-12 sm:h-14 w-auto max-w-[200px] sm:max-w-[240px] object-contain group-hover:scale-[1.03] transition duration-300" />
+            ) : (<>
             <div className="relative">
               <img
                 src="/citrino-icon.jpg"
@@ -176,6 +179,7 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
                 SEMIJOIAS FINAS
               </p>
             </div>
+            </>)}
           </div>
 
           {/* Right Action Buttons */}

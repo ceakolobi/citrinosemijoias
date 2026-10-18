@@ -57,16 +57,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
           <img
             src={activeBanner.image}
             alt={activeBanner.title}
-            className="w-full h-full object-cover object-center opacity-40 mix-blend-luminosity scale-105 transition duration-1000"
+            className="w-full h-full object-cover object-center opacity-100 scale-105 transition duration-1000"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1C1C1C] via-[#1C1C1C]/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="max-w-2xl space-y-6">
+          <div className="max-w-2xl space-y-6 [text-shadow:0_2px_14px_rgba(0,0,0,0.55)]">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C9A84C]/20 border border-[#C9A84C]/40 text-[#C9A84C] text-xs font-semibold tracking-widest uppercase">
               <Sparkles className="w-3.5 h-3.5" />
               {activeBanner.tag || 'ALTA JOALHERIA CONTEMPORÂNEA'}
@@ -314,9 +314,6 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onOpenProduct })
                 </div>
                 <div className="flex items-center gap-2 text-xs font-semibold text-[#1C1C1C]">
                   <CheckCircle2 className="w-4 h-4 text-[#C9A84C]" /> {t('home.manifesto.feature3')}
-                </div>
-                <div className="flex items-center gap-2 text-xs font-semibold text-[#1C1C1C]">
-                  <CheckCircle2 className="w-4 h-4 text-[#C9A84C]" /> {t('home.manifesto.feature4')}
                 </div>
               </div>
 

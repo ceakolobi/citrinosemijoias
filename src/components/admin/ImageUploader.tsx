@@ -13,6 +13,8 @@ interface ImageUploaderProps {
   maxSide?: number;
   /** Aceita Ctrl+V em qualquer lugar da tela enquanto o campo estiver aberto. */
   globalPaste?: boolean;
+  /** Mantem PNG com fundo transparente (usado na logo). */
+  keepTransparency?: boolean;
   label?: string;
 }
 
@@ -39,7 +41,7 @@ function loadBitmap(file: Blob): Promise<{ width: number; height: number; draw: 
 }
 
 /** Reduz e comprime a foto no próprio navegador (fotos de celular têm 5–12 MB). */
-async function prepareImage(file: File, maxSide: number): Promise<Blob> {
+async function prepareImage(file: File, maxSide: number, keepTransparency = false): Promise<Blob> {
   if (!file.type.startsWith('image/')) throw new Error('Este arquivo não é uma imagem.');
   if (file.type === 'image/gif') {
     if (file.size > MAX_BYTES) throw new Error('O GIF passa de 5 MB.');
@@ -52,15 +54,17 @@ async function prepareImage(file: File, maxSide: number): Promise<Blob> {
     let h = Math.max(1, Math.round(bmp.height * scale));
     const canvas = document.createElement('canvas');
     const toBlob = (q: number) =>
-      new Promise<Blob | null>((res) => canvas.toBlob((b) => res(b), 'image/jpeg', q));
+      new Promise<Blob | null>((res) => canvas.toBlob((b) => res(b), keepTransparency ? 'image/png' : 'image/jpeg', q));
 
     for (const quality of [0.86, 0.75, 0.62]) {
       canvas.width = w;
       canvas.height = h;
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Seu navegador não conseguiu preparar a imagem.');
-      ctx.fillStyle = '#ffffff'; // PNG transparente vira fundo branco
-      ctx.fillRect(0, 0, w, h);
+      if (!keepTransparency) {
+        ctx.fillStyle = '#ffffff'; // PNG transparente vira fundo branco
+        ctx.fillRect(0, 0, w, h);
+      }
       bmp.draw(ctx, w, h);
       const blob = await toBlob(quality);
       if (blob && blob.size <= MAX_BYTES) return blob;
@@ -86,6 +90,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   maxSide = 1600,
   globalPaste = false,
   label,
+  keepTransparency = false,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const zoneRef = useRef<HTMLDivElement>(null);
@@ -128,7 +133,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         const key = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         setPending((p) => [...p, { key, name: file.name || 'imagem' }]);
         try {
-          const blob = await prepareImage(file, maxSide);
+          const blob = await prepareImage(file, maxSide, keepTransparency);
           const res = await uploadImage(blob, folder);
           if (res.ok === true) {
             addUrls([res.url]);
