@@ -74,7 +74,7 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
           <div className="lg:col-span-2 space-y-4">
             {companySettings.logoUrl ? (
               <div className="inline-flex bg-[#FAF8F4] rounded-xl px-4 py-3">
-                <img src={companySettings.logoUrl} alt="Logo Citrino Semijoias" className="h-14 w-auto max-w-[240px] object-contain" />
+                <img src={companySettings.logoUrl} alt="Logo Citrino Semijoias" style={{ height: Math.min(120, Math.max(32, Number(companySettings.logoHeight) || 56)) }} className="w-auto max-w-[280px] object-contain" />
               </div>
             ) : (
             <div className="flex items-center gap-3.5">

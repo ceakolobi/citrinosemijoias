@@ -41,6 +41,23 @@ export const AdminSettings: React.FC = () => {
   const setShipField = (k: keyof typeof ship, v: number | boolean) => setShip((prev) => ({ ...prev, [k]: v }));
   const [instagram, setInstagram] = useState(companySettings.instagram);
   const [logoUrl, setLogoUrl] = useState(companySettings.logoUrl || '');
+  const [logoHeight, setLogoHeight] = useState<number>(Number(companySettings.logoHeight) || 56);
+  const [logoSaving, setLogoSaving] = useState(false);
+  const [logoMsg, setLogoMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const saveLogo = async () => {
+    setLogoMsg(null);
+    setLogoSaving(true);
+    try {
+      const res = await updateCompanySettings({ logoUrl, logoHeight: Math.min(120, Math.max(32, Math.round(logoHeight))) });
+      setLogoMsg(res.ok === true
+        ? { ok: true, text: 'Logo salva! Já aparece no topo e no rodapé do site.' }
+        : { ok: false, text: (res as { error: string }).error });
+    } catch (err: any) {
+      setLogoMsg({ ok: false, text: err?.message || 'Não foi possível salvar a logo agora.' });
+    } finally {
+      setLogoSaving(false);
+    }
+  };
 
   // Payment credentials
 
@@ -68,6 +85,7 @@ export const AdminSettings: React.FC = () => {
         state,
         instagram,
         logoUrl,
+        logoHeight: Math.min(120, Math.max(32, Math.round(logoHeight))),
         freeShippingThreshold: Math.max(0, Number(freeShipping) || 0),
         shippingPacPrice: Math.max(0, Number(ship.pacPrice) || 0),
         shippingPacDays: Math.max(1, Math.round(Number(ship.pacDays) || 1)),
@@ -177,7 +195,7 @@ export const AdminSettings: React.FC = () => {
             <div className="space-y-1">
               <h3 className="text-base font-bold text-gray-900">Logo da loja</h3>
               <p className="text-gray-500">
-                Aparece no topo e no rodapé do site. Use de preferência PNG com fundo transparente, na horizontal. Depois de enviar, clique em <strong>Salvar Alterações</strong>.
+                Aparece no topo e no rodapé do site. Use de preferência PNG com fundo transparente, na horizontal. Ajuste o tamanho e clique em <strong>Salvar logo</strong>.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 items-start">
@@ -194,10 +212,50 @@ export const AdminSettings: React.FC = () => {
               </div>
               <div className="flex-1 space-y-2">
                 <p className="font-semibold text-gray-700">Prévia no topo do site</p>
-                <div className="h-20 bg-white border border-gray-200 rounded-lg flex items-center justify-center px-4">
+                <div className="min-h-20 py-3 bg-white border border-gray-200 rounded-lg flex items-center justify-center px-4 overflow-hidden">
                   {logoUrl
-                    ? <img src={logoUrl} alt="Prévia da logo" className="max-h-14 w-auto max-w-full object-contain" />
+                    ? <img src={logoUrl} alt="Prévia da logo" style={{ height: logoHeight }} className="w-auto max-w-full object-contain" />
                     : <span className="text-gray-400">Sem logo enviada: o site usa a logo padrão.</span>}
+                </div>
+                {logoUrl && (
+                  <div className="space-y-1">
+                    <p className="font-semibold text-gray-700">Prévia no rodapé</p>
+                    <div className="py-3 bg-[#1C1C1C] rounded-lg flex items-center justify-center px-4 overflow-hidden">
+                      <div className="inline-flex bg-[#FAF8F4] rounded-xl px-4 py-3">
+                        <img src={logoUrl} alt="Prévia da logo no rodapé" style={{ height: logoHeight }} className="w-auto max-w-full object-contain" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-1 pt-1">
+                  <label className="font-semibold text-gray-700 flex justify-between">
+                    <span>Tamanho da logo</span>
+                    <span className="font-mono text-gray-500">{logoHeight}px</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={32}
+                    max={120}
+                    step={2}
+                    value={logoHeight}
+                    onChange={(e) => setLogoHeight(Number(e.target.value))}
+                    className="w-full accent-[#E97527] cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[10px] text-gray-400"><span>Menor</span><span>Maior</span></div>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={saveLogo}
+                    disabled={logoSaving}
+                    className="bg-[#E97527] hover:bg-[#D5651B] disabled:opacity-60 text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-lg transition flex items-center gap-2 cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{logoSaving ? 'Salvando...' : 'Salvar logo'}</span>
+                  </button>
+                  {logoMsg && (
+                    <span className={`text-xs font-semibold ${logoMsg.ok ? 'text-emerald-700' : 'text-red-600'}`}>{logoMsg.text}</span>
+                  )}
                 </div>
                 {logoUrl && (
                   <button type="button" onClick={() => setLogoUrl('')} className="text-[11px] text-gray-500 underline hover:text-red-600">

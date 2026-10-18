@@ -80,7 +80,7 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
 
       {/* Main Navigation Row */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between min-h-20 py-2 gap-4">
           {/* Mobile Menu Trigger */}
           <div className="flex items-center md:hidden">
             <button
@@ -92,84 +92,21 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* Left Desktop Links */}
-          <nav className="hidden md:flex items-center gap-8">
-            <button
-              onClick={() => onNavigate('home')}
-              className={`text-xs tracking-[0.18em] uppercase transition font-medium ${
-                currentView === 'home' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
-              }`}
-            >
-              Início
-            </button>
-            <button
-              onClick={() => onNavigate('catalog')}
-              className={`text-xs tracking-[0.18em] uppercase transition font-medium ${
-                currentView === 'catalog' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
-              }`}
-            >
-              Coleção Completa
-            </button>
-            <button
-              onClick={() => onNavigate('aneis')}
-              className={`text-xs tracking-[0.18em] uppercase transition font-medium ${
-                currentView === 'aneis' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
-              }`}
-            >
-              Anéis
-            </button>
-            <button
-              onClick={() => onNavigate('colares')}
-              className={`text-xs tracking-[0.18em] uppercase transition font-medium ${
-                currentView === 'colares' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
-              }`}
-            >
-              Colares
-            </button>
-            <button
-              onClick={() => onNavigate('perfumes')}
-              className={`text-xs tracking-[0.18em] uppercase transition font-medium ${
-                currentView === 'perfumes' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
-              }`}
-            >
-              Perfumes
-            </button>
-            <button
-              onClick={() => onNavigate('piercings')}
-              className={`text-xs tracking-[0.18em] uppercase transition font-medium ${
-                currentView === 'piercings' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
-              }`}
-            >
-              Piercings
-            </button>
-            <button
-              onClick={() => onNavigate('revendedora')}
-              className={`text-xs tracking-[0.18em] uppercase transition font-semibold flex items-center gap-1 ${
-                currentView === 'revendedora' ? 'text-[#C9A84C]' : 'text-[#E8705A] hover:text-[#c75540]'
-              }`}
-            >
-              Seja Revendedora
-            </button>
-          </nav>
-
-          {/* Center Brand Identity with Official Logo */}
+          {/* Logo no canto esquerdo (no celular fica centralizada) */}
           <div 
-            className="flex-1 md:flex-initial flex items-center justify-center gap-2.5 sm:gap-3.5 cursor-pointer group py-1" 
+            className="flex-1 md:flex-initial flex items-center justify-center md:justify-start gap-2.5 sm:gap-3.5 cursor-pointer group py-1 shrink-0 md:mr-6" 
             onClick={() => onNavigate('home')}
           >
             {companySettings.logoUrl ? (
-              <img src={companySettings.logoUrl} alt="Logo Citrino Semijoias" className="h-12 sm:h-14 w-auto max-w-[200px] sm:max-w-[240px] object-contain group-hover:scale-[1.03] transition duration-300" />
+              <img src={companySettings.logoUrl} alt="Logo Citrino Semijoias" style={{ height: Math.min(120, Math.max(32, Number(companySettings.logoHeight) || 56)) }} className="w-auto max-h-16 sm:max-h-none max-w-[200px] sm:max-w-[320px] object-contain group-hover:scale-[1.03] transition duration-300" />
             ) : (<>
-            <div className="relative">
+            <div className="relative shrink-0">
               <img
                 src="/citrino-icon.jpg"
                 alt="Logo Citrino Semijoias"
                 className="w-11 h-11 sm:w-13 sm:h-13 object-cover rounded-full border border-[#C9A84C]/50 shadow-xs group-hover:scale-105 group-hover:border-[#C9A84C] transition duration-300"
                 referrerPolicy="no-referrer"
               />
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[#C9A84C] rounded-full border-2 border-white flex items-center justify-center text-[7px] text-white font-bold">
-                ✓
-              </span>
             </div>
             <div className="text-left">
               <h1 className="text-xl sm:text-2xl lg:text-[26px] font-serif-luxury tracking-[0.2em] font-medium text-[#1C1C1C] uppercase leading-none group-hover:text-[#C9A84C] transition">
@@ -182,8 +119,68 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
             </>)}
           </div>
 
+          {/* Left Desktop Links */}
+          <nav className="hidden md:flex flex-1 items-center justify-center gap-4 xl:gap-6">
+            <button
+              onClick={() => onNavigate('home')}
+              className={`text-xs tracking-[0.1em] 2xl:tracking-[0.16em] whitespace-nowrap uppercase transition font-medium ${
+                currentView === 'home' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
+              }`}
+            >
+              Início
+            </button>
+            <button
+              onClick={() => onNavigate('catalog')}
+              className={`text-xs tracking-[0.1em] 2xl:tracking-[0.16em] whitespace-nowrap uppercase transition font-medium ${
+                currentView === 'catalog' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
+              }`}
+            >
+              Coleção Completa
+            </button>
+            <button
+              onClick={() => onNavigate('aneis')}
+              className={`text-xs tracking-[0.1em] 2xl:tracking-[0.16em] whitespace-nowrap uppercase transition font-medium ${
+                currentView === 'aneis' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
+              }`}
+            >
+              Anéis
+            </button>
+            <button
+              onClick={() => onNavigate('colares')}
+              className={`text-xs tracking-[0.1em] 2xl:tracking-[0.16em] whitespace-nowrap uppercase transition font-medium ${
+                currentView === 'colares' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
+              }`}
+            >
+              Colares
+            </button>
+            <button
+              onClick={() => onNavigate('perfumes')}
+              className={`text-xs tracking-[0.1em] 2xl:tracking-[0.16em] whitespace-nowrap uppercase transition font-medium ${
+                currentView === 'perfumes' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
+              }`}
+            >
+              Perfumes
+            </button>
+            <button
+              onClick={() => onNavigate('piercings')}
+              className={`text-xs tracking-[0.1em] 2xl:tracking-[0.16em] whitespace-nowrap uppercase transition font-medium ${
+                currentView === 'piercings' ? 'text-[#C9A84C] font-semibold' : 'text-[#333] hover:text-[#C9A84C]'
+              }`}
+            >
+              Piercings
+            </button>
+            <button
+              onClick={() => onNavigate('revendedora')}
+              className={`text-xs tracking-[0.1em] 2xl:tracking-[0.16em] whitespace-nowrap uppercase transition font-semibold flex items-center gap-1 ${
+                currentView === 'revendedora' ? 'text-[#C9A84C]' : 'text-[#E8705A] hover:text-[#c75540]'
+              }`}
+            >
+              Seja Revendedora
+            </button>
+          </nav>
+
           {/* Right Action Buttons */}
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 lg:gap-5 shrink-0">
             {/* Search Button */}
             <button
               onClick={() => setSearchOpen(!searchOpen)}
