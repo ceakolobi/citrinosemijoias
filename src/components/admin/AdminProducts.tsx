@@ -11,6 +11,7 @@ import {
 import { useCitrinoStore } from '../../services/store';
 import { Product, ProductVariation, ProductMaterial, ProductStone } from '../../types';
 import { ImageUploader } from './ImageUploader';
+import { Leitor } from './AdminConsignacao';
 
 export const AdminProducts: React.FC = () => {
   const { allProducts: products, categories, addProduct, updateProduct, deleteProduct } = useCitrinoStore();
@@ -31,6 +32,7 @@ export const AdminProducts: React.FC = () => {
   const [formName, setFormName] = useState<string>('');
   const [formSku, setFormSku] = useState<string>('');
   const [formBarcode, setFormBarcode] = useState<string>('');
+  const [lendoCodigo, setLendoCodigo] = useState(false);
   const [formCategory, setFormCategory] = useState<string>('Anéis');
   const [formPlating, setFormPlating] = useState<string>('Banho de Ouro 18k (10 milésimos)');
   const [formStone, setFormStone] = useState<string>('Citrino Natural');
@@ -59,6 +61,7 @@ export const AdminProducts: React.FC = () => {
     setFormCategory(categories[0]?.name || 'Anéis');
     setFormPlating('Banho de Ouro 18k (10 milésimos)');
     setFormBarcode('');
+    setLendoCodigo(false);
     setFormStone('');
     setFormWeight(0);
     setFormCostPrice(0);
@@ -122,6 +125,13 @@ export const AdminProducts: React.FC = () => {
     const promo = formPromoPrice ? Number(formPromoPrice) : undefined;
     if (promo !== undefined && !(promo > 0 && promo < Number(formPrice))) {
       setFormError('O preço promocional precisa ser menor que o preço de venda.');
+      return;
+    }
+
+    const bc = formBarcode.trim();
+    const outro = products.find((x: Product) => x.id !== editingProduct?.id && ((bc && x.barcode === bc) || x.sku.toLowerCase() === formSku.trim().toLowerCase()));
+    if (outro) {
+      setFormError(bc && outro.barcode === bc ? `Esse código de barras já está na peça "${outro.name}".` : `Esse SKU já existe na peça "${outro.name}".`);
       return;
     }
 
@@ -443,14 +453,25 @@ export const AdminProducts: React.FC = () => {
 
                 <div className="space-y-1">
                   <label className="font-semibold text-gray-700">Código de barras da embalagem</label>
-                  <input
-                    type="text"
-                    value={formBarcode}
-                    onChange={(e) => setFormBarcode(e.target.value)}
-                    placeholder="Passe o leitor aqui (opcional)"
-                    className="w-full bg-[#F4F5F7] border border-gray-200 rounded-lg p-2.5 focus:border-[#E97527] focus:outline-none font-mono"
-                  />
-                  <p className="text-xs text-gray-400">Se a peça já vem com código de barras, use o mesmo na Consignação.</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={formBarcode}
+                      onChange={(e) => setFormBarcode(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+                      placeholder="Clique aqui e passe o leitor, ou digite"
+                      className="flex-1 bg-[#F4F5F7] border border-gray-200 rounded-lg p-2.5 focus:border-[#E97527] focus:outline-none font-mono"
+                    />
+                    <button type="button" onClick={() => setLendoCodigo(!lendoCodigo)} className="px-3 rounded-lg border border-gray-300 bg-white text-sm whitespace-nowrap">
+                      {lendoCodigo ? 'Fechar' : 'Ler com celular'}
+                    </button>
+                  </div>
+                  {lendoCodigo && (
+                    <div className="border rounded-lg p-2 bg-white">
+                      <Leitor onCode={(c) => { setFormBarcode(c); setLendoCodigo(false); }} />
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400">Leitor USB/Bluetooth: clique no campo e passe na embalagem. No celular: toque em "Ler com celular" e aponte a câmera. Use o mesmo código na Consignação.</p>
                 </div>
 
                 <div className="space-y-1">

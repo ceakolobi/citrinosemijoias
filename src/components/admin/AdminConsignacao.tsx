@@ -56,7 +56,7 @@ const acharProduto = (lista: any[], code: string) => {
 };
 
 /** Entrada de leitura: leitor USB/Bluetooth (age como teclado + Enter), digitação manual e câmera do celular. */
-function Leitor({ onCode }: { onCode: (code: string) => void }) {
+export function Leitor({ onCode }: { onCode: (code: string) => void }) {
   const [txt, setTxt] = useState('');
   const [cam, setCam] = useState(false);
   const [msg, setMsg] = useState('');
