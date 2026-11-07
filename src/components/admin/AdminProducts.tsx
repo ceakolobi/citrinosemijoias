@@ -30,6 +30,7 @@ export const AdminProducts: React.FC = () => {
   // Form fields
   const [formName, setFormName] = useState<string>('');
   const [formSku, setFormSku] = useState<string>('');
+  const [formBarcode, setFormBarcode] = useState<string>('');
   const [formCategory, setFormCategory] = useState<string>('Anéis');
   const [formPlating, setFormPlating] = useState<string>('Banho de Ouro 18k (10 milésimos)');
   const [formStone, setFormStone] = useState<string>('Citrino Natural');
@@ -57,6 +58,7 @@ export const AdminProducts: React.FC = () => {
     setFormSku(`CIT-${Math.floor(1000 + Math.random() * 9000)}`);
     setFormCategory(categories[0]?.name || 'Anéis');
     setFormPlating('Banho de Ouro 18k (10 milésimos)');
+    setFormBarcode('');
     setFormStone('');
     setFormWeight(0);
     setFormCostPrice(0);
@@ -82,6 +84,7 @@ export const AdminProducts: React.FC = () => {
     setFormError(null);
     setFormName(p.name);
     setFormSku(p.sku);
+    setFormBarcode(p.barcode ?? '');
     setFormCategory(p.category);
     setFormPlating(p.plating);
     setFormStone(p.stone);
@@ -127,6 +130,7 @@ export const AdminProducts: React.FC = () => {
       ...(editingProduct || { rating: 0, reviewCount: 0, warranty: '1 ano no banho' }),
       name: formName.trim(),
       sku: formSku.trim(),
+      barcode: formBarcode.trim() || undefined,
       category: formCategory,
       material: (editingProduct?.material || 'Ouro 18k') as ProductMaterial,
       plating: formPlating,
@@ -435,6 +439,18 @@ export const AdminProducts: React.FC = () => {
                     onChange={(e) => setFormSku(e.target.value)}
                     className="w-full bg-[#F4F5F7] border border-gray-200 rounded-lg p-2.5 focus:border-[#E97527] focus:outline-none font-mono"
                   />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-semibold text-gray-700">Código de barras da embalagem</label>
+                  <input
+                    type="text"
+                    value={formBarcode}
+                    onChange={(e) => setFormBarcode(e.target.value)}
+                    placeholder="Passe o leitor aqui (opcional)"
+                    className="w-full bg-[#F4F5F7] border border-gray-200 rounded-lg p-2.5 focus:border-[#E97527] focus:outline-none font-mono"
+                  />
+                  <p className="text-xs text-gray-400">Se a peça já vem com código de barras, use o mesmo na Consignação.</p>
                 </div>
 
                 <div className="space-y-1">

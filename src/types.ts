@@ -10,6 +10,7 @@ export interface ProductVariation {
 export interface Product {
   id: string;
   sku: string;
+  barcode?: string; // código de barras da embalagem (opcional)
   name: string;
   description: string;
   details: string[];

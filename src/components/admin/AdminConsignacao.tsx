@@ -19,6 +19,12 @@ type Linha = { sku: string; nome: string; qty: number; codes: string[]; unit_cen
 const brl = (c: number) => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const dt = (s: string | null) => (s ? new Date(s).toLocaleDateString('pt-BR') : '—');
 const skuDe = (code: string) => code.split('#')[0].trim();
+/** Acha a peça pelo código lido: código de barras da embalagem, SKU, ou SKU#único. */
+const acharProduto = (lista: any[], code: string) => {
+  const c = code.trim().toLowerCase(); const sku = skuDe(code).toLowerCase();
+  return lista.find((p) => p.barcode && String(p.barcode).trim().toLowerCase() === c)
+    || lista.find((p) => String(p.sku || '').toLowerCase() === sku);
+};
 
 /** Entrada de leitura: leitor USB/Bluetooth (age como teclado + Enter), digitação manual e câmera do celular. */
 function Leitor({ onCode }: { onCode: (code: string) => void }) {
@@ -97,10 +103,7 @@ export function AdminConsignacao() {
   const aReceber = maletas.filter((m) => m.status === 'encerrada').reduce((t, m) => t + m.a_receber_cents, 0);
   const foraDoEstoque = abertas.reduce((t, m) => t + m.citrino_consignacao_itens.reduce((s, i) => s + i.qtd_levada * i.unit_cents, 0), 0);
 
-  const achar = (code: string) => {
-    const sku = skuDe(code).toLowerCase();
-    return allProducts.find((p: any) => String(p.sku || '').toLowerCase() === sku);
-  };
+  const achar = (code: string) => acharProduto(allProducts, code);
   const precoCents = (p: any) => Math.round((Number(p.promoPrice) > 0 ? Number(p.promoPrice) : Number(p.price) || 0) * 100);
 
   return (
@@ -244,8 +247,10 @@ function Acerto({ m, onClose, onDone }: { m: Maleta; onClose: () => void; onDone
   const [busy, setBusy] = useState(false);
   const get = (sku: string) => dev[sku.toLowerCase()] || { qty: 0, codes: [] };
 
+  const { allProducts } = useCitrinoStore();
   const ler = (code: string) => {
-    const sku = skuDe(code).toLowerCase();
+    const prod = acharProduto(allProducts as any[], code);
+    const sku = String(prod?.sku ?? skuDe(code)).toLowerCase();
     const it = itens.find((i) => i.sku.toLowerCase() === sku);
     if (!it) { setAviso(`${code} não faz parte desta maleta`); return; }
     const cur = get(it.sku); const unico = code.includes('#');
@@ -375,7 +380,7 @@ function Etiquetas() {
             <input type="number" min={0} value={sel[p.id] || ''} placeholder="qtd" onChange={(e) => setSel({ ...sel, [p.id]: Math.max(0, Number(e.target.value) || 0) })} className="w-20 border rounded px-2 py-1" /></div>))}
       </div>
       <button disabled={!rotulos.length} onClick={imprimir} className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm flex items-center gap-1 disabled:opacity-40"><Printer className="w-4 h-4" />Imprimir {rotulos.length} etiqueta(s)</button>
-      <p className="text-xs text-gray-400">Imprima em impressora comum (papel adesivo) ou de etiquetas. As etiquetas "por peça" geram códigos novos a cada impressão.</p>
+      <p className="text-xs text-gray-400">Se a peça já tem código de barras da embalagem, não precisa etiqueta: cadastre o código no produto. Imprima em impressora comum (papel adesivo) ou de etiquetas. As etiquetas "por peça" geram códigos novos a cada impressão.</p>
     </div>
   );
 }
