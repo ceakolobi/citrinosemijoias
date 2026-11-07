@@ -167,11 +167,6 @@ export const EcommerceFooter: React.FC<FooterProps> = ({ onNavigate, onSwitchToA
                   Cuidados com a Semijoia
                 </button>
               </li>
-              <li>
-                <button onClick={() => onNavigate('account')} className="hover:text-[#C9A84C] transition">
-                  Minha Conta de Cliente
-                </button>
-              </li>
             </ul>
           </div>
 

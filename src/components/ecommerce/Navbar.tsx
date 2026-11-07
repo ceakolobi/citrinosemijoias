@@ -190,7 +190,8 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Account / Login */}
+            {/* Área do cliente só aparece para quem já tem conta (login ainda não existe para o público) */}
+            {currentCustomer && (
             <button
               onClick={() => onNavigate('account')}
               className="hidden sm:flex items-center gap-1 text-[#1C1C1C] hover:text-[#C9A84C] transition text-xs font-medium"
@@ -201,8 +202,9 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
                 {currentCustomer ? currentCustomer.name.split(' ')[0] : 'Entrar'}
               </span>
             </button>
+            )}
 
-            {/* Wishlist */}
+            {currentCustomer && (
             <button
               onClick={() => onNavigate('account', { tab: 'wishlist' })}
               className="p-1 text-[#1C1C1C] hover:text-[#C9A84C] transition relative"
@@ -215,6 +217,7 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
                 </span>
               )}
             </button>
+            )}
 
             {/* Cart Button */}
             <button
@@ -342,12 +345,14 @@ export const EcommerceNavbar: React.FC<NavbarProps> = ({
             >
               Rastrear Meu Pedido
             </button>
+            {currentCustomer && (
             <button
               onClick={() => { onNavigate('account'); setMobileMenuOpen(false); }}
               className="text-left py-2 border-b border-gray-100 text-[#1C1C1C]"
             >
               Minha Conta & Pedidos
             </button>
+            )}
           </div>
 
           <div className="pt-2">
