@@ -387,6 +387,23 @@ function Revendedoras({ revs, onSaved }: { revs: Rev[]; onSaved: () => void }) {
   );
 }
 
+export type Rotulo = { code: string; sku: string; nome: string; preco: number };
+
+/** Abre a janela de impressão com etiquetas: código de barras + SKU + nome + preço. */
+export function imprimirEtiquetas(rotulos: Rotulo[]) {
+  if (!rotulos.length) return;
+  const w = window.open('', '_blank'); if (!w) { alert('Libere pop-ups para imprimir.'); return; }
+  const svgs = rotulos.map((r) => {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    const ean = /^\d{13}$/.test(r.code) ? 'EAN13' : /^\d{8}$/.test(r.code) ? 'EAN8' : 'CODE128';
+    try { JsBarcode(s, r.code, { format: ean, height: 40, width: 1.6, fontSize: 11, margin: 2 }); }
+    catch { JsBarcode(s, r.code, { format: 'CODE128', height: 40, width: 1.6, fontSize: 11, margin: 2 }); }
+    return `<div class="e">${s.outerHTML}<div class="s">SKU: ${esc(r.sku)}</div><div class="n">${esc(r.nome.slice(0, 34))}</div><div class="p">${r.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></div>`;
+  }).join('');
+  w.document.write(`<html><head><title>Etiquetas</title><style>body{font-family:Arial;margin:8px}.e{display:inline-block;width:200px;border:1px dashed #bbb;padding:4px;margin:3px;text-align:center;page-break-inside:avoid}.s{font-size:10px;font-weight:bold;font-family:monospace}.n{font-size:10px}.p{font-weight:bold;font-size:12px}svg{max-width:100%}</style></head><body>${svgs}<script>onload=()=>print()</script></body></html>`);
+  w.document.close();
+}
+
 function Etiquetas() {
   const { allProducts } = useCitrinoStore();
   const [sel, setSel] = useState<Record<string, number>>({});
@@ -394,24 +411,15 @@ function Etiquetas() {
   const [busca, setBusca] = useState('');
   const lista = useMemo(() => allProducts.filter((p: any) => p.sku && `${p.sku} ${p.name}`.toLowerCase().includes(busca.toLowerCase())).slice(0, 40), [allProducts, busca]);
   const rotulos = useMemo(() => {
-    const out: { code: string; nome: string; preco: number }[] = [];
+    const out: Rotulo[] = [];
     for (const p of allProducts as any[]) {
       const n = sel[p.id] || 0;
-      for (let i = 0; i < n; i++) out.push({ code: modo === 'modelo' ? p.sku : `${p.sku}#${Math.random().toString(36).slice(2, 7).toUpperCase()}`, nome: p.name, preco: Number(p.promoPrice) > 0 ? Number(p.promoPrice) : Number(p.price) });
+      for (let i = 0; i < n; i++) out.push({ code: modo === 'modelo' ? (p.barcode || p.sku) : `${p.sku}#${Math.random().toString(36).slice(2, 7).toUpperCase()}`, sku: p.sku, nome: p.name, preco: Number(p.promoPrice) > 0 ? Number(p.promoPrice) : Number(p.price) });
     }
     return out;
   }, [sel, modo, allProducts]);
 
-  const imprimir = () => {
-    const w = window.open('', '_blank'); if (!w) return;
-    const svgs = rotulos.map((r) => {
-      const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      JsBarcode(s, r.code, { format: 'CODE128', height: 40, width: 1.6, fontSize: 11, margin: 2 });
-      return `<div class="e">${s.outerHTML}<div class="n">${r.nome.slice(0, 34)}</div><div class="p">${r.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></div>`;
-    }).join('');
-    w.document.write(`<html><head><title>Etiquetas</title><style>body{font-family:Arial;margin:8px}.e{display:inline-block;width:200px;border:1px dashed #bbb;padding:4px;margin:3px;text-align:center}.n{font-size:10px}.p{font-weight:bold;font-size:12px}svg{max-width:100%}</style></head><body>${svgs}<script>onload=()=>print()</script></body></html>`);
-    w.document.close();
-  };
+  const imprimir = () => imprimirEtiquetas(rotulos);
   return (
     <div className="space-y-3">
       <div className="flex gap-3 text-sm items-center flex-wrap">

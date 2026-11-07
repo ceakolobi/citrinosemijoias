@@ -6,12 +6,13 @@ import {
   Trash2, 
   AlertTriangle, 
   X, 
-  Loader2
+  Loader2,
+  Printer
 } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
 import { Product, ProductVariation, ProductMaterial, ProductStone } from '../../types';
 import { ImageUploader } from './ImageUploader';
-import { Leitor } from './AdminConsignacao';
+import { Leitor, imprimirEtiquetas } from './AdminConsignacao';
 
 export const AdminProducts: React.FC = () => {
   const { allProducts: products, categories, addProduct, updateProduct, deleteProduct } = useCitrinoStore();
@@ -33,6 +34,13 @@ export const AdminProducts: React.FC = () => {
   const [formSku, setFormSku] = useState<string>('');
   const [formBarcode, setFormBarcode] = useState<string>('');
   const [lendoCodigo, setLendoCodigo] = useState(false);
+
+  const etiquetar = (sku: string, barcode: string | undefined, nome: string, preco: number) => {
+    if (!sku.trim()) { alert('Informe o SKU antes de imprimir a etiqueta (use o botão Gerar SKU).'); return; }
+    const q = Number(window.prompt('Quantas etiquetas imprimir?', '1'));
+    if (!q || q < 1) return;
+    imprimirEtiquetas(Array.from({ length: Math.min(q, 200) }, () => ({ code: (barcode || '').trim() || sku.trim(), sku: sku.trim(), nome: nome.trim() || sku, preco })));
+  };
 
   // Gera SKU no padrão da loja: CIT-<categoria>-<próximo número>, sem repetir nenhum existente.
   const gerarSku = () => {
@@ -394,6 +402,13 @@ export const AdminProducts: React.FC = () => {
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
+                          onClick={() => etiquetar(product.sku, product.barcode, product.name, Number(product.promoPrice) > 0 ? Number(product.promoPrice) : Number(product.price))}
+                          className="p-1.5 text-gray-500 hover:text-[#E97527] hover:bg-orange-50 rounded transition"
+                          title="Imprimir etiqueta (código de barras + SKU)"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleOpenEdit(product)}
                           className="p-1.5 text-gray-500 hover:text-[#E97527] hover:bg-orange-50 rounded transition"
                           title="Editar Cadastro"
@@ -488,6 +503,7 @@ export const AdminProducts: React.FC = () => {
                       <Leitor onCode={(c) => { setFormBarcode(c); setLendoCodigo(false); }} />
                     </div>
                   )}
+                  <button type="button" onClick={() => etiquetar(formSku, formBarcode, formName, Number(formPromoPrice) > 0 ? Number(formPromoPrice) : Number(formPrice))} className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-sm flex items-center gap-1"><Printer className="w-4 h-4" />Imprimir etiqueta (código de barras + SKU)</button>
                   <p className="text-xs text-gray-400">Leitor USB/Bluetooth: clique no campo e passe na embalagem. No celular: toque em "Ler com celular" e aponte a câmera. Use o mesmo código na Consignação.</p>
                 </div>
 
