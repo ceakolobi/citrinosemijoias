@@ -33,6 +33,19 @@ export const AdminProducts: React.FC = () => {
   const [formSku, setFormSku] = useState<string>('');
   const [formBarcode, setFormBarcode] = useState<string>('');
   const [lendoCodigo, setLendoCodigo] = useState(false);
+
+  // Gera SKU no padrão da loja: CIT-<categoria>-<próximo número>, sem repetir nenhum existente.
+  const gerarSku = () => {
+    const semAcento = (formCategory || 'PEC').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+    const mapa: Record<string, string> = { ANEIS: 'AN', ANEL: 'AN', COLARES: 'COL', COLAR: 'COL', BRINCOS: 'BRI', BRINCO: 'BRI', PULSEIRAS: 'PUL', PULSEIRA: 'PUL', CONJUNTOS: 'CONJ', CONJUNTO: 'CONJ' };
+    const chave = semAcento.replace(/[^A-Z]/g, '');
+    const pref = mapa[chave] || chave.slice(0, 3) || 'PEC';
+    let max = 0;
+    for (const x of products as Product[]) { const m = /(\d+)$/.exec(x.sku || ''); if (m && /^CIT-/i.test(x.sku)) max = Math.max(max, Number(m[1])); }
+    let n = max + 1; let sku = '';
+    do { sku = `CIT-${pref}-${String(n).padStart(2, '0')}`; n++; } while ((products as Product[]).some((x) => x.sku.toLowerCase() === sku.toLowerCase() && x.id !== editingProduct?.id));
+    setFormSku(sku);
+  };
   const [formCategory, setFormCategory] = useState<string>('Anéis');
   const [formPlating, setFormPlating] = useState<string>('Banho de Ouro 18k (10 milésimos)');
   const [formStone, setFormStone] = useState<string>('Citrino Natural');
@@ -442,13 +455,17 @@ export const AdminProducts: React.FC = () => {
 
                 <div className="space-y-1">
                   <label className="font-semibold text-gray-700">SKU / Código *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formSku}
-                    onChange={(e) => setFormSku(e.target.value)}
-                    className="w-full bg-[#F4F5F7] border border-gray-200 rounded-lg p-2.5 focus:border-[#E97527] focus:outline-none font-mono"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      required
+                      value={formSku}
+                      onChange={(e) => setFormSku(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+                      className="flex-1 min-w-0 bg-[#F4F5F7] border border-gray-200 rounded-lg p-2.5 focus:border-[#E97527] focus:outline-none font-mono"
+                    />
+                    <button type="button" onClick={gerarSku} className="px-3 rounded-lg border border-gray-300 bg-white text-sm whitespace-nowrap">Gerar SKU</button>
+                  </div>
                 </div>
 
                 <div className="space-y-1">
