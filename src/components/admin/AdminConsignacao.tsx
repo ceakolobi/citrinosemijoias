@@ -1,7 +1,7 @@
 // Consignação ("maleta"): peças saem do estoque ao entregar, voltam ao ler as que sobraram; o resto vira venda.
 // A regra e o estoque ficam nas funções do banco (citrino_consig_*); aqui só a tela.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Briefcase, Users, Tag, Plus, X, Camera, ScanLine, Printer, Loader2, Check, Trash2, RefreshCw } from 'lucide-react';
+import { Briefcase, Users, Tag, Plus, X, Camera, ScanLine, Printer, Loader2, Check, Trash2, RefreshCw, BarChart3, Download } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
 import { supabase } from '../../services/supabaseClient';
 import { useCitrinoStore } from '../../services/store';
@@ -19,6 +19,35 @@ type Linha = { sku: string; nome: string; qty: number; codes: string[]; unit_cen
 const brl = (c: number) => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const dt = (s: string | null) => (s ? new Date(s).toLocaleDateString('pt-BR') : '—');
 const skuDe = (code: string) => code.split('#')[0].trim();
+const esc = (s: string) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
+
+/** Folha imprimível: romaneio de entrega (maleta aberta) ou comprovante de acerto (maleta encerrada). */
+function imprimirRomaneio(m: Maleta) {
+  const w = window.open('', '_blank'); if (!w) { alert('Libere pop-ups para imprimir.'); return; }
+  const acertada = m.status === 'encerrada';
+  const linhas = m.citrino_consignacao_itens.map((i) => {
+    const vend = i.qtd_levada - i.qtd_devolvida;
+    return `<tr><td>${esc(i.sku)}</td><td>${esc(i.nome)}</td><td class="r">${i.qtd_levada}</td><td class="r">${brl(i.unit_cents)}</td><td class="r">${brl(i.unit_cents * i.qtd_levada)}</td>${acertada ? `<td class="r">${i.qtd_devolvida}</td><td class="r">${vend}</td><td class="r">${brl(vend * i.unit_cents)}</td>` : ''}</tr>`;
+  }).join('');
+  const pecas = m.citrino_consignacao_itens.reduce((t, i) => t + i.qtd_levada, 0);
+  w.document.write(`<html><head><title>${acertada ? 'Acerto' : 'Romaneio'} #${m.numero}</title><style>
+  body{font-family:Arial,sans-serif;margin:28px;color:#222;font-size:13px}h1{font-size:20px;margin:0}h2{font-size:14px;margin:2px 0 14px;color:#666;font-weight:normal}
+  table{width:100%;border-collapse:collapse;margin:12px 0}th,td{border:1px solid #ccc;padding:6px 8px;text-align:left}th{background:#f2f2f2}.r{text-align:right}
+  .tot{margin-top:6px;text-align:right;font-size:14px}.ass{display:flex;gap:40px;margin-top:70px}.ass div{flex:1;border-top:1px solid #333;text-align:center;padding-top:4px;font-size:12px}
+  .nota{margin-top:18px;font-size:11px;color:#555}</style></head><body>
+  <h1>Citrino Semijoias — ${acertada ? 'Comprovante de acerto' : 'Romaneio de entrega (consignação)'}</h1>
+  <h2>Maleta nº ${m.numero} · Revendedora: <b>${esc(m.revendedora_nome || '—')}</b> · Saída: ${dt(m.saida_em)}${acertada ? ` · Acerto: ${dt(m.acerto_em)}` : ''}</h2>
+  <table><thead><tr><th>SKU</th><th>Peça</th><th class="r">Qtd. levada</th><th class="r">Valor unit.</th><th class="r">Subtotal</th>${acertada ? '<th class="r">Devolvidas</th><th class="r">Vendidas</th><th class="r">Valor vendido</th>' : ''}</tr></thead><tbody>${linhas}</tbody></table>
+  <div class="tot">${pecas} peça(s) · Total levado: <b>${brl(m.total_levado_cents)}</b></div>
+  ${acertada ? `<div class="tot">Vendido: <b>${brl(m.total_vendido_cents)}</b> · Comissão (${m.comissao_percent}%): <b>${brl(m.comissao_cents)}</b> · <b>Valor a pagar à Citrino: ${brl(m.a_receber_cents)}</b></div>`
+    : `<div class="tot">Comissão combinada: ${m.comissao_percent}% sobre o que for vendido</div>`}
+  ${m.obs ? `<div class="nota">Obs.: ${esc(m.obs)}</div>` : ''}
+  <div class="nota">${acertada ? 'Declaro que conferi as peças devolvidas e os valores acima.' : 'Declaro que recebi as peças acima em consignação e me comprometo a devolver as não vendidas e acertar o valor das vendidas na data combinada.'}</div>
+  <div class="ass"><div>Citrino Semijoias</div><div>${esc(m.revendedora_nome || 'Revendedora')}</div></div>
+  <script>onload=()=>print()</script></body></html>`);
+  w.document.close();
+}
+
 /** Acha a peça pelo código lido: código de barras da embalagem, SKU, ou SKU#único. */
 const acharProduto = (lista: any[], code: string) => {
   const c = code.trim().toLowerCase(); const sku = skuDe(code).toLowerCase();
@@ -61,19 +90,32 @@ function Leitor({ onCode }: { onCode: (code: string) => void }) {
   }, [cam]);
 
   const enviar = () => { const c = txt.trim(); if (c) { onCode(c); setTxt(''); } };
+  const modo: 'leitor' | 'celular' | 'digitar' = cam ? 'celular' : 'leitor';
+  const btn = (ativo: boolean) => `flex-1 px-2 py-2 rounded-lg border text-sm flex items-center justify-center gap-1 ${ativo ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-gray-300'}`;
   return (
     <div className="space-y-2">
+      <div className="text-xs font-semibold text-gray-600">Como quer ler as peças?</div>
       <div className="flex gap-2">
-        <div className="flex-1 flex items-center gap-2 border border-gray-300 rounded-lg px-3 bg-white">
-          <ScanLine className="w-4 h-4 text-gray-400" />
-          <input autoFocus value={txt} onChange={(e) => setTxt(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), enviar())}
-            placeholder="Passe o leitor aqui ou digite o código e Enter" className="flex-1 py-2.5 outline-none text-sm" />
-        </div>
-        <button type="button" onClick={enviar} className="px-3 rounded-lg bg-gray-900 text-white text-sm">Adicionar</button>
-        {suportaCamera && <button type="button" onClick={() => setCam(!cam)} className="px-3 rounded-lg border border-gray-300 bg-white text-sm flex items-center gap-1"><Camera className="w-4 h-4" />{cam ? 'Fechar' : 'Câmera'}</button>}
+        <button type="button" onClick={() => setCam(false)} className={btn(modo === 'leitor')}><ScanLine className="w-4 h-4" />Leitor de código</button>
+        <button type="button" onClick={() => setCam(true)} className={btn(modo === 'celular')}><Camera className="w-4 h-4" />Câmera do celular</button>
       </div>
-      {cam && <video ref={video} muted playsInline className="w-full max-h-56 rounded-lg bg-black object-cover" />}
-      {!suportaCamera && <p className="text-xs text-gray-400">Este navegador não lê pela câmera; use o leitor ou digite.</p>}
+      {!cam && (
+        <>
+          <div className="flex gap-2">
+            <input autoFocus value={txt} onChange={(e) => setTxt(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), enviar())}
+              placeholder="Clique aqui e passe o leitor (ou digite o código)" className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 outline-none text-sm bg-white" />
+            <button type="button" onClick={enviar} className="px-3 rounded-lg bg-gray-900 text-white text-sm">Adicionar</button>
+          </div>
+          <p className="text-xs text-gray-500">Leitor USB ou Bluetooth: conecte no computador (ou pareie no celular), clique no campo acima e passe nas peças. Ele digita o código sozinho e já adiciona. Sem leitor? Digite o código e aperte Enter.</p>
+        </>
+      )}
+      {cam && (
+        <>
+          {suportaCamera
+            ? <><video ref={video} muted playsInline className="w-full max-h-56 rounded-lg bg-black object-cover" /><p className="text-xs text-gray-500">Aponte a câmera para o código de barras da peça. Cada leitura adiciona 1 peça. Permita o acesso à câmera quando o navegador pedir.</p></>
+            : <p className="text-xs text-red-600">Este navegador não lê código pela câmera. No celular, abra o sistema pelo Chrome (Android). No iPhone use um leitor Bluetooth ou digite o código.</p>}
+        </>
+      )}
       {msg && <p className="text-xs text-red-600">{msg}</p>}
     </div>
   );
@@ -81,14 +123,14 @@ function Leitor({ onCode }: { onCode: (code: string) => void }) {
 
 export function AdminConsignacao() {
   const { allProducts } = useCitrinoStore();
-  const [aba, setAba] = useState<'maletas' | 'revendedoras' | 'etiquetas'>('maletas');
+  const [aba, setAba] = useState<'maletas' | 'revendedoras' | 'relatorios' | 'etiquetas'>('maletas');
   const [revs, setRevs] = useState<Rev[]>([]);
   const [maletas, setMaletas] = useState<Maleta[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
   const [modal, setModal] = useState<null | { tipo: 'nova' } | { tipo: 'acerto'; m: Maleta } | { tipo: 'ver'; m: Maleta }>(null);
 
-  const carregar = useCallback(async () => {
+  const carregar = useCallback(async (focoId?: string): Promise<Maleta | undefined> => {
     setLoading(true); setErro('');
     const [r, m] = await Promise.all([
       supabase.from('citrino_revendedoras').select('*').order('nome'),
@@ -96,6 +138,7 @@ export function AdminConsignacao() {
     ]);
     if (r.error || m.error) setErro('Não foi possível carregar. Se for a primeira vez, falta aplicar a migração de consignação no banco.');
     setRevs((r.data as Rev[]) || []); setMaletas((m.data as Maleta[]) || []); setLoading(false);
+    return focoId ? ((m.data as Maleta[]) || []).find((x) => x.id === focoId) : undefined;
   }, []);
   useEffect(() => { carregar(); }, [carregar]);
 
@@ -113,7 +156,7 @@ export function AdminConsignacao() {
           <h1 className="text-xl font-bold flex items-center gap-2"><Briefcase className="w-5 h-5" /> Consignação (maletas)</h1>
           <p className="text-sm text-gray-500">Entregue peças para revendedoras; no acerto, leia as que sobraram e o sistema calcula o resto e dá baixa no estoque.</p>
         </div>
-        <button onClick={carregar} className="text-sm flex items-center gap-1 text-gray-600"><RefreshCw className="w-4 h-4" />Atualizar</button>
+        <button onClick={() => carregar()} className="text-sm flex items-center gap-1 text-gray-600"><RefreshCw className="w-4 h-4" />Atualizar</button>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -123,7 +166,7 @@ export function AdminConsignacao() {
       </div>
 
       <div className="flex gap-2 border-b border-gray-200">
-        {([['maletas', 'Maletas', Briefcase], ['revendedoras', 'Revendedoras', Users], ['etiquetas', 'Etiquetas', Tag]] as const).map(([k, l, Ic]) => (
+        {([['maletas', 'Maletas', Briefcase], ['revendedoras', 'Revendedoras', Users], ['relatorios', 'Relatórios', BarChart3], ['etiquetas', 'Etiquetas', Tag]] as const).map(([k, l, Ic]) => (
           <button key={k} onClick={() => setAba(k)} className={`px-4 py-2 text-sm flex items-center gap-1.5 border-b-2 ${aba === k ? 'border-gray-900 font-semibold' : 'border-transparent text-gray-500'}`}><Ic className="w-4 h-4" />{l}</button>
         ))}
       </div>
@@ -151,10 +194,11 @@ export function AdminConsignacao() {
       )}
 
       {aba === 'revendedoras' && <Revendedoras revs={revs} onSaved={carregar} />}
+      {aba === 'relatorios' && <Relatorios maletas={maletas} revs={revs} />}
       {aba === 'etiquetas' && <Etiquetas />}
 
-      {modal?.tipo === 'nova' && <NovaMaleta revs={revs.filter((r) => r.ativo)} achar={achar} precoCents={precoCents} onClose={() => setModal(null)} onDone={async () => { setModal(null); await refreshCatalog(); carregar(); }} />}
-      {modal?.tipo === 'acerto' && <Acerto m={modal.m} onClose={() => setModal(null)} onDone={async () => { setModal(null); await refreshCatalog(); carregar(); }} />}
+      {modal?.tipo === 'nova' && <NovaMaleta revs={revs.filter((r) => r.ativo)} achar={achar} precoCents={precoCents} onClose={() => setModal(null)} onDone={async (id?: string) => { setModal(null); await refreshCatalog(); const novo = await carregar(id); if (novo) imprimirRomaneio(novo); }} />}
+      {modal?.tipo === 'acerto' && <Acerto m={modal.m} onClose={() => setModal(null)} onDone={async () => { const id = modal.m.id; setModal(null); await refreshCatalog(); const fechada = await carregar(id); if (fechada) imprimirRomaneio(fechada); }} />}
       {modal?.tipo === 'ver' && <Detalhes m={modal.m} onClose={() => setModal(null)} onCancel={async () => {
         if (!confirm('Cancelar esta maleta? As peças voltam ao estoque.')) return;
         const { error } = await supabase.rpc('citrino_consig_cancelar', { _id: modal.m.id });
@@ -175,7 +219,7 @@ function Moldura({ titulo, onClose, children }: { titulo: string; onClose: () =>
   );
 }
 
-function NovaMaleta({ revs, achar, precoCents, onClose, onDone }: { revs: Rev[]; achar: (c: string) => any; precoCents: (p: any) => number; onClose: () => void; onDone: () => void }) {
+function NovaMaleta({ revs, achar, precoCents, onClose, onDone }: { revs: Rev[]; achar: (c: string) => any; precoCents: (p: any) => number; onClose: () => void; onDone: (id?: string) => void }) {
   const [rev, setRev] = useState('');
   const [obs, setObs] = useState('');
   const [linhas, setLinhas] = useState<Linha[]>([]);
@@ -203,14 +247,14 @@ function NovaMaleta({ revs, achar, precoCents, onClose, onDone }: { revs: Rev[];
 
   const confirmar = async () => {
     setBusy(true);
-    const { error } = await supabase.rpc('citrino_consig_abrir', { _rev: rev || null, _itens: linhas.map((l) => ({ sku: l.sku, qty: l.qty, codes: l.codes })), _obs: obs });
+    const { data, error } = await supabase.rpc('citrino_consig_abrir', { _rev: rev || null, _itens: linhas.map((l) => ({ sku: l.sku, qty: l.qty, codes: l.codes })), _obs: obs });
     setBusy(false);
-    if (error) setAviso(error.message); else onDone();
+    if (error) setAviso(error.message); else onDone(String(data));
   };
   return (
     <Moldura titulo="Nova maleta" onClose={onClose}>
       <select value={rev} onChange={(e) => setRev(e.target.value)} className="w-full border rounded-lg px-3 py-2.5 text-sm">
-        <option value="">Sem revendedora (só controle das peças fora)</option>
+        <option value="">Sem revendedora (funcionária / venda externa da equipe)</option>
         {revs.map((r) => <option key={r.id} value={r.id}>{r.nome} — comissão {r.comissao_percent}%</option>)}
       </select>
       <Leitor onCode={adicionar} />
@@ -235,7 +279,7 @@ function NovaMaleta({ revs, achar, precoCents, onClose, onDone }: { revs: Rev[];
       </div>
       <input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Observação (opcional)" className="w-full border rounded-lg px-3 py-2 text-sm" />
       <div className="flex items-center justify-between"><div className="text-sm">Total levado: <b>{brl(total)}</b></div>
-        <button disabled={!linhas.length || busy} onClick={confirmar} className="px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm disabled:opacity-40 flex items-center gap-1">{busy && <Loader2 className="w-4 h-4 animate-spin" />}Entregar maleta e dar saída no estoque</button></div>
+        <button disabled={!linhas.length || busy} onClick={confirmar} className="px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm disabled:opacity-40 flex items-center gap-1">{busy && <Loader2 className="w-4 h-4 animate-spin" />}Entregar maleta, dar saída e imprimir romaneio</button></div>
     </Moldura>
   );
 }
@@ -295,7 +339,7 @@ function Acerto({ m, onClose, onDone }: { m: Maleta; onClose: () => void; onDone
         <div className="flex justify-between"><span>Comissão da revendedora ({m.comissao_percent}%)</span><b>{brl(comissao)}</b></div>
         <div className="flex justify-between text-base"><span>Valor a receber da revendedora</span><b>{brl(vendidoCents - comissao)}</b></div>
       </div>
-      <div className="flex justify-end"><button disabled={busy} onClick={confirmar} className="px-5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm flex items-center gap-1">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}Concluir acerto e dar baixa</button></div>
+      <div className="flex justify-end"><button disabled={busy} onClick={confirmar} className="px-5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm flex items-center gap-1">{busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}Concluir acerto e imprimir comprovante</button></div>
     </Moldura>
   );
 }
@@ -310,6 +354,7 @@ function Detalhes({ m, onClose, onCancel }: { m: Maleta; onClose: () => void; on
             <span className="text-gray-600 whitespace-nowrap">levou {i.qtd_levada}{m.status === 'encerrada' && ` · voltou ${i.qtd_devolvida} · vendeu ${i.qtd_levada - i.qtd_devolvida}`}</span></div>))}
       </div>
       {m.status === 'encerrada' && <div className="text-sm">Vendido {brl(m.total_vendido_cents)} · Comissão {brl(m.comissao_cents)} · <b>A receber {brl(m.a_receber_cents)}</b></div>}
+      {m.status !== 'cancelada' && <button onClick={() => imprimirRomaneio(m)} className="px-3 py-1.5 text-sm border rounded-lg flex items-center gap-1"><Printer className="w-4 h-4" />{m.status === 'aberta' ? 'Imprimir romaneio de entrega' : 'Imprimir comprovante de acerto'}</button>}
       {m.status === 'aberta' && <button onClick={onCancel} className="text-sm text-red-600 underline">Cancelar maleta (devolve tudo ao estoque)</button>}
     </Moldura>
   );
@@ -381,6 +426,92 @@ function Etiquetas() {
       </div>
       <button disabled={!rotulos.length} onClick={imprimir} className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm flex items-center gap-1 disabled:opacity-40"><Printer className="w-4 h-4" />Imprimir {rotulos.length} etiqueta(s)</button>
       <p className="text-xs text-gray-400">Se a peça já tem código de barras da embalagem, não precisa etiqueta: cadastre o código no produto. Imprima em impressora comum (papel adesivo) ou de etiquetas. As etiquetas "por peça" geram códigos novos a cada impressão.</p>
+    </div>
+  );
+}
+
+function Relatorios({ maletas, revs }: { maletas: Maleta[]; revs: Rev[] }) {
+  const hoje = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+  const [de, setDe] = useState(hoje.slice(0, 8) + '01');
+  const [ate, setAte] = useState(hoje);
+  const [rev, setRev] = useState('');
+  const [status, setStatus] = useState('');
+  const dia = (s: string) => new Date(s).toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+  const lista = useMemo(() => maletas.filter((m) => m.status !== 'cancelada' || status === 'cancelada')
+    .filter((m) => (!de || dia(m.saida_em) >= de) && (!ate || dia(m.saida_em) <= ate))
+    .filter((m) => !rev || (rev === 'sem' ? !m.revendedora_id : m.revendedora_id === rev))
+    .filter((m) => !status || m.status === status), [maletas, de, ate, rev, status]);
+  const soma = (f: (m: Maleta) => number) => lista.reduce((t, m) => t + f(m), 0);
+  const acertadas = lista.filter((m) => m.status === 'encerrada');
+
+  const porRev = useMemo(() => {
+    const mp = new Map<string, { nome: string; maletas: number; levado: number; vendido: number; comissao: number; receber: number }>();
+    for (const m of lista) {
+      const k = m.revendedora_nome || 'Sem revendedora';
+      const o = mp.get(k) || { nome: k, maletas: 0, levado: 0, vendido: 0, comissao: 0, receber: 0 };
+      o.maletas++; o.levado += m.total_levado_cents;
+      if (m.status === 'encerrada') { o.vendido += m.total_vendido_cents; o.comissao += m.comissao_cents; o.receber += m.a_receber_cents; }
+      mp.set(k, o);
+    }
+    return [...mp.values()].sort((x, y) => y.vendido - x.vendido);
+  }, [lista]);
+  const topPecas = useMemo(() => {
+    const mp = new Map<string, { sku: string; nome: string; qtd: number; valor: number }>();
+    for (const m of acertadas) for (const i of m.citrino_consignacao_itens) {
+      const v = i.qtd_levada - i.qtd_devolvida; if (v <= 0) continue;
+      const o = mp.get(i.sku) || { sku: i.sku, nome: i.nome, qtd: 0, valor: 0 };
+      o.qtd += v; o.valor += v * i.unit_cents; mp.set(i.sku, o);
+    }
+    return [...mp.values()].sort((x, y) => y.qtd - x.qtd).slice(0, 10);
+  }, [acertadas]);
+
+  const exportar = () => {
+    const cab = ['Maleta', 'Revendedora', 'Status', 'Saída', 'Acerto', 'Levado (R$)', 'Vendido (R$)', 'Comissão (R$)', 'A receber (R$)'];
+    const n = (c: number) => (c / 100).toFixed(2).replace('.', ',');
+    const rows = lista.map((m) => [m.numero, m.revendedora_nome || '', m.status, dt(m.saida_em), dt(m.acerto_em), n(m.total_levado_cents), n(m.total_vendido_cents), n(m.comissao_cents), n(m.a_receber_cents)]);
+    const csv = [cab, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+    const el = document.createElement('a'); el.href = url; el.download = `consignacao-${de}-a-${ate}.csv`; el.click(); URL.revokeObjectURL(url);
+  };
+  const imprimir = () => window.print();
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white border rounded-xl p-3 grid grid-cols-2 md:grid-cols-5 gap-2 items-end text-sm print:hidden">
+        <label className="flex flex-col gap-1">De<input type="date" value={de} onChange={(e) => setDe(e.target.value)} className="border rounded-lg px-2 py-2" /></label>
+        <label className="flex flex-col gap-1">Até<input type="date" value={ate} onChange={(e) => setAte(e.target.value)} className="border rounded-lg px-2 py-2" /></label>
+        <label className="flex flex-col gap-1">Revendedora
+          <select value={rev} onChange={(e) => setRev(e.target.value)} className="border rounded-lg px-2 py-2"><option value="">Todas</option><option value="sem">Sem revendedora</option>{revs.map((r) => <option key={r.id} value={r.id}>{r.nome}</option>)}</select></label>
+        <label className="flex flex-col gap-1">Situação
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className="border rounded-lg px-2 py-2"><option value="">Abertas e acertadas</option><option value="aberta">Só abertas</option><option value="encerrada">Só acertadas</option><option value="cancelada">Canceladas</option></select></label>
+        <div className="flex gap-2"><button onClick={exportar} className="flex-1 px-3 py-2 border rounded-lg flex items-center justify-center gap-1"><Download className="w-4 h-4" />Excel</button>
+          <button onClick={imprimir} className="flex-1 px-3 py-2 border rounded-lg flex items-center justify-center gap-1"><Printer className="w-4 h-4" />Imprimir</button></div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {[['Maletas', String(lista.length)], ['Levado', brl(soma((m) => m.total_levado_cents))], ['Vendido', brl(soma((m) => m.total_vendido_cents))], ['Comissões', brl(soma((m) => m.comissao_cents))], ['A receber', brl(soma((m) => m.a_receber_cents))]].map(([t, v]) => (
+          <div key={t} className="bg-white rounded-xl border p-3"><div className="text-xs text-gray-500">{t}</div><div className="text-lg font-bold">{v}</div></div>))}
+      </div>
+
+      <div className="bg-white border rounded-xl overflow-x-auto">
+        <div className="px-3 pt-3 font-semibold text-sm">Por revendedora</div>
+        <table className="w-full text-sm"><thead><tr className="text-left text-gray-500"><th className="p-2">Revendedora</th><th className="p-2 text-right">Maletas</th><th className="p-2 text-right">Levado</th><th className="p-2 text-right">Vendido</th><th className="p-2 text-right">Comissão</th><th className="p-2 text-right">A receber</th></tr></thead>
+          <tbody>{porRev.map((r) => <tr key={r.nome} className="border-t"><td className="p-2">{r.nome}</td><td className="p-2 text-right">{r.maletas}</td><td className="p-2 text-right">{brl(r.levado)}</td><td className="p-2 text-right">{brl(r.vendido)}</td><td className="p-2 text-right">{brl(r.comissao)}</td><td className="p-2 text-right font-semibold">{brl(r.receber)}</td></tr>)}
+            {porRev.length === 0 && <tr><td colSpan={6} className="p-3 text-gray-400">Nada no período.</td></tr>}</tbody></table>
+      </div>
+
+      <div className="bg-white border rounded-xl overflow-x-auto">
+        <div className="px-3 pt-3 font-semibold text-sm">Maletas do período</div>
+        <table className="w-full text-sm"><thead><tr className="text-left text-gray-500"><th className="p-2">Nº</th><th className="p-2">Revendedora</th><th className="p-2">Situação</th><th className="p-2">Saída</th><th className="p-2 text-right">Levado</th><th className="p-2 text-right">Vendido</th><th className="p-2 text-right">A receber</th></tr></thead>
+          <tbody>{lista.map((m) => <tr key={m.id} className="border-t"><td className="p-2">#{m.numero}</td><td className="p-2">{m.revendedora_nome || '—'}</td><td className="p-2">{m.status === 'aberta' ? 'Aberta' : m.status === 'encerrada' ? 'Acertada' : 'Cancelada'}</td><td className="p-2">{dt(m.saida_em)}</td><td className="p-2 text-right">{brl(m.total_levado_cents)}</td><td className="p-2 text-right">{m.status === 'encerrada' ? brl(m.total_vendido_cents) : '—'}</td><td className="p-2 text-right">{m.status === 'encerrada' ? brl(m.a_receber_cents) : '—'}</td></tr>)}</tbody></table>
+      </div>
+
+      <div className="bg-white border rounded-xl overflow-x-auto">
+        <div className="px-3 pt-3 font-semibold text-sm">Peças mais vendidas (maletas acertadas)</div>
+        <table className="w-full text-sm"><thead><tr className="text-left text-gray-500"><th className="p-2">SKU</th><th className="p-2">Peça</th><th className="p-2 text-right">Vendidas</th><th className="p-2 text-right">Valor</th></tr></thead>
+          <tbody>{topPecas.map((p) => <tr key={p.sku} className="border-t"><td className="p-2">{p.sku}</td><td className="p-2">{p.nome}</td><td className="p-2 text-right">{p.qtd}</td><td className="p-2 text-right">{brl(p.valor)}</td></tr>)}
+            {topPecas.length === 0 && <tr><td colSpan={4} className="p-3 text-gray-400">Sem vendas acertadas no período.</td></tr>}</tbody></table>
+      </div>
     </div>
   );
 }
