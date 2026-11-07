@@ -33,6 +33,7 @@ import { AdminReports } from './components/admin/AdminReports';
 import { AdminSettings } from './components/admin/AdminSettings';
 import { AdminContent } from './components/admin/AdminContent';
 import { AdminSales } from './components/admin/AdminSales';
+import { AdminConsignacao } from './components/admin/AdminConsignacao';
 import { PaymentReturnView } from './components/ecommerce/PaymentReturnView';
 import { CertificateVerifyView } from './components/ecommerce/CertificateVerifyView';
 
@@ -166,9 +167,9 @@ export default function App() {
     // Role guard: redirect to dashboard if current module is not allowed for this role
     const role = adminSession.role;
     const ROLE_MODULES: Record<string, AdminModule[]> = {
-      admin:      ['dashboard','products','content','orders','customers','financial','marketing','reports','settings'],
+      admin:      ['dashboard','products','consignacao','content','orders','customers','financial','marketing','reports','settings'],
       financeiro: ['dashboard','orders','financial','reports'],
-      operador:   ['dashboard','orders','products'],
+      operador:   ['dashboard','orders','products','consignacao'],
     };
     const allowed = ROLE_MODULES[role] || ['dashboard'];
     const safeModule: AdminModule = allowed.includes(adminModule) ? adminModule : 'dashboard';
@@ -188,6 +189,7 @@ export default function App() {
             <AdminDashboard onNavigateModule={(mod) => setAdminModule(mod)} />
           )}
           {safeModule === 'products' && <AdminProducts />}
+          {safeModule === 'consignacao' && <AdminConsignacao />}
           {safeModule === 'content' && <AdminContent />}
           {safeModule === 'orders' && <AdminSales />}
           {safeModule === 'customers' && <AdminCustomers />}

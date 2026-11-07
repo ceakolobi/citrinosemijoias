@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Sparkles,
   AlertTriangle,
+  Briefcase,
   FileText
 } from 'lucide-react';
 import { useCitrinoStore } from '../../services/store';
@@ -25,6 +26,7 @@ import { useCitrinoStore } from '../../services/store';
 export type AdminModule = 
   | 'dashboard'
   | 'products'
+  | 'consignacao'
   | 'content'
   | 'orders'
   | 'customers'
@@ -65,6 +67,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'dashboard',  label: 'Dashboard',              icon: LayoutDashboard, badge: null, roles: ['admin', 'financeiro', 'operador'] },
     { id: 'orders',     label: 'Vendas & Garantias',      icon: ShoppingCart,    badge: null, roles: ['admin', 'financeiro', 'operador'] },
     { id: 'products',   label: 'Catálogo & Estoque',      icon: Package,         badge: lowStockCount > 0 ? `${lowStockCount} alertas` : null, badgeAlert: true, roles: ['admin', 'operador'] },
+    { id: 'consignacao',label: 'Consignação (maletas)',   icon: Briefcase,       badge: null, roles: ['admin', 'operador'] },
     { id: 'content',    label: 'Conteúdo do Site',        icon: FileText,        badge: null, roles: ['admin'] },
     { id: 'customers',  label: 'Clientes & B2B',          icon: Users,           badge: null, roles: ['admin'] },
     { id: 'financial',  label: 'Financeiro & DRE',        icon: DollarSign,      badge: null, roles: ['admin', 'financeiro'] },
