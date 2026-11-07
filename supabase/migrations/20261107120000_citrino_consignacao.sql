@@ -51,13 +51,13 @@ create policy "consig itens equipe le" on public.citrino_consignacao_itens for s
 
 create or replace function public.citrino_consig_abrir(_rev uuid, _itens jsonb, _obs text default null)
 returns uuid language plpgsql security definer set search_path = public as $$
-declare cid uuid; it jsonb; d record; q int; pr int; total bigint := 0; r record; n int := 0;
+declare cid uuid; it jsonb; d record; q int; pr int; total bigint := 0; rn text; rc numeric := 0;
 begin
   if public.citrino_admin_role() not in ('admin','operador') then raise exception 'Sem permissão'; end if;
   if jsonb_typeof(_itens) <> 'array' or jsonb_array_length(_itens) = 0 then raise exception 'Maleta vazia'; end if;
-  if _rev is not null then select * into r from public.citrino_revendedoras where id = _rev and ativo; if not found then raise exception 'Revendedora inválida'; end if; end if;
+  if _rev is not null then select nome, comissao_percent into rn, rc from public.citrino_revendedoras where id = _rev and ativo; if not found then raise exception 'Revendedora inválida'; end if; end if;
   insert into public.citrino_consignacoes (revendedora_id, revendedora_nome, comissao_percent, obs)
-  values (_rev, r.nome, coalesce(r.comissao_percent, 0), nullif(trim(coalesce(_obs,'')), '')) returning id into cid;
+  values (_rev, rn, coalesce(rc, 0), nullif(trim(coalesce(_obs,'')), '')) returning id into cid;
   for it in select * from jsonb_array_elements(_itens) loop
     q := greatest(1, coalesce((it->>'qty')::int, 1));
     select * into d from public.citrino_docs where collection = 'products' and lower(data->>'sku') = lower(it->>'sku') for update;
@@ -67,7 +67,7 @@ begin
     update public.citrino_docs set data = jsonb_set(data, '{stock}', to_jsonb(coalesce((data->>'stock')::numeric::int, 0) - q)) where collection = d.collection and id = d.id;
     insert into public.citrino_consignacao_itens (consignacao_id, product_id, sku, nome, unit_cents, qtd_levada, codigos_saida)
     values (cid, d.id, d.data->>'sku', d.data->>'name', pr, q, coalesce(it->'codes', '[]'::jsonb));
-    total := total + pr::bigint * q; n := n + 1;
+    total := total + pr::bigint * q;
   end loop;
   update public.citrino_consignacoes set total_levado_cents = total where id = cid;
   return cid;
@@ -75,7 +75,7 @@ end $$;
 
 create or replace function public.citrino_consig_acertar(_id uuid, _devolvidos jsonb)
 returns uuid language plpgsql security definer set search_path = public as $$
-declare c record; i record; dv jsonb; q int; codes jsonb; vend bigint := 0; comm bigint; rest jsonb; x text;
+declare c record; i record; dv jsonb; q int; codes jsonb; vend bigint := 0; comm bigint; x text;
 begin
   if public.citrino_admin_role() not in ('admin','operador') then raise exception 'Sem permissão'; end if;
   select * into c from public.citrino_consignacoes where id = _id for update;
