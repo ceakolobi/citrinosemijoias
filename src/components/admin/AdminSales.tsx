@@ -286,18 +286,18 @@ export const AdminSales: React.FC = () => {
         </div>
       )}
 
-      {showNew && <NewCertificateModal products={allProducts || []} onClose={() => setShowNew(false)} onSaved={() => { setShowNew(false); setTab('certificados'); setQ(''); load(); }} />}
+      {showNew && <NewCertificateModal products={allProducts || []} onClose={() => setShowNew(false)} onSaved={(c) => { setShowNew(false); setTab('certificados'); setQ(''); load(); try { printCert(c, pedidos, allProducts || []); } catch { /* o certificado fica na lista para abrir manualmente */ } }} />}
     </div>
   );
 };
 
-const NewCertificateModal: React.FC<{ products: any[]; onClose: () => void; onSaved: () => void }> = ({ products, onClose, onSaved }) => {
+const NewCertificateModal: React.FC<{ products: any[]; onClose: () => void; onSaved: (c: Cert) => void }> = ({ products, onClose, onSaved }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [date, setDate] = useState(today());
   const [warranty, setWarranty] = useState<'6 meses' | '1 ano'>('6 meses');
   const [orderRef, setOrderRef] = useState('');
-  const [items, setItems] = useState<{ name: string; quantity: number; sku?: string; image?: string; unit_cents?: number }[]>([]);
+  const [items, setItems] = useState<{ name: string; quantity: number; sku?: string; image?: string; unit_cents?: number; variation?: string }[]>([]);
   const [pick, setPick] = useState('');
   const [custom, setCustom] = useState('');
   const [cq, setCq] = useState('');
@@ -325,8 +325,17 @@ const NewCertificateModal: React.FC<{ products: any[]; onClose: () => void; onSa
     if (!v || items.length >= 30) return;
     const reais = prod ? (Number(prod.promoPrice) > 0 ? Number(prod.promoPrice) : Number(prod.price)) : 0;
     const img = prod && Array.isArray(prod.images) ? String(prod.images[0] || '') : '';
+    // Especificações da peça (material, pedra, banho, peso) vão no certificado mesmo sem foto.
+    const specs = prod
+      ? [prod.material, prod.stone, prod.plating, Number(prod.weightGrams) > 0 ? `${prod.weightGrams} g` : '']
+          .map((x) => String(x ?? '').trim())
+          .filter((x) => x && !/^(nenhuma?|none|-)$/i.test(x))
+          .join(' · ')
+          .slice(0, 160)
+      : '';
     setItems((prev) => [...prev, {
       name: v, quantity: 1,
+      ...(specs ? { variation: specs } : {}),
       ...(prod?.sku ? { sku: String(prod.sku).slice(0, 40) } : {}),
       ...(/^https:\/\//i.test(img) && img.length <= 500 ? { image: img } : {}),
       ...(reais > 0 ? { unit_cents: Math.round(reais * 100) } : {}),
@@ -357,7 +366,7 @@ const NewCertificateModal: React.FC<{ products: any[]; onClose: () => void; onSa
       .single();
     setSaving(false);
     if (error || !data) return setErr('Não foi possível emitir. Confira os dados e tente de novo.');
-    onSaved();
+    onSaved(data as Cert);
   };
 
   const inp = 'w-full border border-gray-300 rounded-lg p-2 text-sm';
