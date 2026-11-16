@@ -8,6 +8,7 @@ import { supabase } from '../../services/supabaseClient';
 import { useCitrinoStore } from '../../services/store';
 import { openCertificate } from '../../services/certificatePrint';
 import { certificateUrl, formatBRL, formatDateBR } from '../../services/checkout';
+import { searchRemoteCustomers, ClienteBusca } from '../../services/clientesSync';
 
 type Pedido = {
   id: string; order_nsu: string; status: string; created_at: string; paid_at: string | null;
@@ -299,7 +300,18 @@ const NewCertificateModal: React.FC<{ products: any[]; onClose: () => void; onSa
   const [items, setItems] = useState<{ name: string; quantity: number; sku?: string; image?: string; unit_cents?: number }[]>([]);
   const [pick, setPick] = useState('');
   const [custom, setCustom] = useState('');
+  const [cq, setCq] = useState('');
+  const [cMatches, setCMatches] = useState<ClienteBusca[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Busca o cliente cadastrado (nome, CPF ou telefone) e preenche nome e WhatsApp.
+  useEffect(() => {
+    const s = cq.trim();
+    if (s.length < 2) { setCMatches([]); return; }
+    let off = false;
+    const t = setTimeout(async () => { const r = await searchRemoteCustomers(s); if (!off) setCMatches(r); }, 250);
+    return () => { off = true; clearTimeout(t); };
+  }, [cq]);
   const [err, setErr] = useState<string | null>(null);
 
   const matches = useMemo(() => {
@@ -358,6 +370,19 @@ const NewCertificateModal: React.FC<{ products: any[]; onClose: () => void; onSa
         </div>
         <p className="text-xs text-gray-500">Para vendas feitas fora do site (WhatsApp, Instagram, presencial). Vendas pagas pelo site já geram o certificado sozinhas.</p>
         <div className="space-y-3 text-sm">
+          <div className="relative">
+            <label className="text-xs font-semibold">Buscar cliente cadastrado</label>
+            <input className={inp} placeholder="Digite nome, CPF ou telefone" value={cq} onChange={(e) => setCq(e.target.value)} />
+            {cMatches.length > 0 && (
+              <div className="absolute z-10 left-0 right-0 bg-white border rounded-lg shadow mt-1 max-h-48 overflow-y-auto">
+                {cMatches.map((c) => (
+                  <button key={c.id} type="button" onClick={() => { setName(c.name); setPhone(c.phone); setCq(''); setCMatches([]); }} className="w-full text-left px-3 py-2 text-xs hover:bg-gray-50">
+                    {c.name} <span className="text-gray-400">{c.phone}{c.document ? ` · ${c.document}` : ''}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div><label className="text-xs font-semibold">Nome completo do cliente *</label><input className={inp} maxLength={120} value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="text-xs font-semibold">WhatsApp do cliente</label><input className={inp} inputMode="tel" placeholder="(47) 99999-9999" value={phone} onChange={(e) => setPhone(e.target.value)} /></div>

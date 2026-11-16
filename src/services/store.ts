@@ -1,4 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { supabase } from './supabaseClient';
+import { fetchRemoteCustomers, upsertCustomers } from './clientesSync';
 import {
   Product,
   Category,
@@ -228,6 +230,45 @@ export function useCitrinoStore() {
   useEffect(() => { setLocal(STORAGE_KEYS.WISHLIST, wishlist); }, [wishlist]);
   useEffect(() => { setLocal(STORAGE_KEYS.CURRENT_USER, currentCustomer); }, [currentCustomer]);
   useEffect(() => { setLocal(STORAGE_KEYS.ACTIVE_ROLE, activeAdminRole); }, [activeAdminRole]);
+
+  // Clientes: espelho no banco (so com admin logado). Antes o cadastro ficava so neste navegador.
+  // Junta o que ja existe no banco com o que esta aqui e envia o que faltar (nada e apagado).
+  const customersRef = useRef(customers);
+  customersRef.current = customers;
+  const syncedCustomers = useRef<Map<string, string>>(new Map());
+  const customersReady = useRef(false);
+  const MOCK_IDS = useMemo(() => new Set(INITIAL_CUSTOMERS.map((c) => c.id)), []);
+  const pushCustomers = async () => {
+    if (!customersReady.current) return;
+    const dirty = customersRef.current.filter(
+      (c) => !MOCK_IDS.has(c.id) && syncedCustomers.current.get(c.id) !== JSON.stringify(c)
+    );
+    if (dirty.length === 0) return;
+    const ok = await upsertCustomers(dirty);
+    if (ok) dirty.forEach((c) => syncedCustomers.current.set(c.id, JSON.stringify(c)));
+  };
+  useEffect(() => {
+    let off = false;
+    const start = async () => {
+      const remoteList = await fetchRemoteCustomers();
+      if (off || remoteList === null) return;
+      remoteList.forEach((c) => syncedCustomers.current.set(c.id, JSON.stringify(c)));
+      setCustomers((prev) => {
+        const have = new Set(prev.map((c) => c.id));
+        const extra = remoteList.filter((c) => !have.has(c.id));
+        return extra.length ? [...extra, ...prev] : prev;
+      });
+      customersReady.current = true;
+      pushCustomers();
+    };
+    start();
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') { customersReady.current = false; start(); }
+    });
+    return () => { off = true; sub.subscription.unsubscribe(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => { pushCustomers(); }, [customers]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cart actions
   const addToCart = (
